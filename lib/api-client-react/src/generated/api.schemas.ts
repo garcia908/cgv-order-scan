@@ -8,3 +8,61 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface OrderItem {
+  id: string;
+  name: string;
+  qty: number;
+  price: number;
+}
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+
+export const OrderStatus = {
+  baru: "baru",
+  disiapkan: "disiapkan",
+  selesai: "selesai",
+} as const;
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+
+export const PaymentMethod = {
+  QRIS: "QRIS",
+  VA_BCA: "VA_BCA",
+  VA_MANDIRI: "VA_MANDIRI",
+} as const;
+
+export interface Order {
+  id: number;
+  orderCode: string;
+  tableNumber: string;
+  items: OrderItem[];
+  subtotal: number;
+  total: number;
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateOrderInput {
+  tableNumber: string;
+  items: OrderItem[];
+  subtotal: number;
+  total: number;
+  paymentMethod: PaymentMethod;
+}
+
+export interface UpdateOrderStatusInput {
+  status: OrderStatus;
+}
+
+export interface OrdersSummary {
+  newOrdersToday: number;
+  revenueToday: number;
+  totalOrders: number;
+}

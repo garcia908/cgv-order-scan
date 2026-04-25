@@ -14,3 +14,112 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all orders
+ */
+export const ListOrdersResponseItem = zod.object({
+  id: zod.number(),
+  orderCode: zod.string(),
+  tableNumber: zod.string(),
+  items: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      qty: zod.number(),
+      price: zod.number(),
+    }),
+  ),
+  subtotal: zod.number(),
+  total: zod.number(),
+  paymentMethod: zod.enum(["QRIS", "VA_BCA", "VA_MANDIRI"]),
+  status: zod.enum(["baru", "disiapkan", "selesai"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListOrdersResponse = zod.array(ListOrdersResponseItem);
+
+/**
+ * @summary Create a new order
+ */
+export const CreateOrderBody = zod.object({
+  tableNumber: zod.string(),
+  items: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      qty: zod.number(),
+      price: zod.number(),
+    }),
+  ),
+  subtotal: zod.number(),
+  total: zod.number(),
+  paymentMethod: zod.enum(["QRIS", "VA_BCA", "VA_MANDIRI"]),
+});
+
+/**
+ * @summary Today's order summary for staff dashboard
+ */
+export const GetOrdersSummaryResponse = zod.object({
+  newOrdersToday: zod.number(),
+  revenueToday: zod.number(),
+  totalOrders: zod.number(),
+});
+
+/**
+ * @summary Get order detail
+ */
+export const GetOrderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetOrderResponse = zod.object({
+  id: zod.number(),
+  orderCode: zod.string(),
+  tableNumber: zod.string(),
+  items: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      qty: zod.number(),
+      price: zod.number(),
+    }),
+  ),
+  subtotal: zod.number(),
+  total: zod.number(),
+  paymentMethod: zod.enum(["QRIS", "VA_BCA", "VA_MANDIRI"]),
+  status: zod.enum(["baru", "disiapkan", "selesai"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update order status
+ */
+export const UpdateOrderStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateOrderStatusBody = zod.object({
+  status: zod.enum(["baru", "disiapkan", "selesai"]),
+});
+
+export const UpdateOrderStatusResponse = zod.object({
+  id: zod.number(),
+  orderCode: zod.string(),
+  tableNumber: zod.string(),
+  items: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      qty: zod.number(),
+      price: zod.number(),
+    }),
+  ),
+  subtotal: zod.number(),
+  total: zod.number(),
+  paymentMethod: zod.enum(["QRIS", "VA_BCA", "VA_MANDIRI"]),
+  status: zod.enum(["baru", "disiapkan", "selesai"]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});

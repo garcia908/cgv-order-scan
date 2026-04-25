@@ -18,7 +18,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Artifacts
 
-- **CGV Snack Order** (`artifacts/cgv-snack-order`) — Mobile-first trial web app for QR-table self-ordering at CGV cinema snack bar. Pure frontend, state in localStorage. Routes: `/` landing, `/menu`, `/cart`, `/payment` (QRIS / VA BCA / VA Mandiri), `/success`, `/staff` (dashboard with CSV export). UI in Bahasa Indonesia, CGV red branding. Uses zustand for state.
+- **CGV Snack Order** (`artifacts/cgv-snack-order`) — Mobile-first trial web app for QR-table self-ordering at CGV cinema snack bar. Routes: `/` landing, `/menu`, `/cart`, `/payment` (QRIS / VA BCA / VA Mandiri), `/success`, `/staff` (dashboard with CSV export). UI in Bahasa Indonesia, CGV red branding. Cart state in zustand+localStorage; orders persisted via API server (PostgreSQL + Drizzle). Staff dashboard fetches via React Query hooks and auto-refreshes every 5s, exporting CSV from real DB rows.
+- **API Server** (`artifacts/api-server`) — Express 5 + Drizzle. `/api/orders` CRUD + `/api/orders/:id/status` PATCH + `/api/orders/summary` for dashboard stats. Order schema in `lib/db/src/schema/orders.ts` (jsonb items column).
 
 ## Key Commands
 

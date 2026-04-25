@@ -1,36 +1,58 @@
-import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { useAppStore } from '@/lib/store';
 import { formatRupiah } from '@/lib/format';
-import { CheckCircle2, ChevronRight, UtensilsCrossed } from 'lucide-react';
+import { CheckCircle2, UtensilsCrossed, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useGetOrder } from '@workspace/api-client-react';
 
 export default function Success() {
   const [, setLocation] = useLocation();
-  const orders = useAppStore(state => state.orders);
-  
-  // Get order ID from URL
+
   const params = new URLSearchParams(window.location.search);
-  const orderId = params.get('orderId');
-  const order = orders.find(o => o.id === orderId) || orders[0]; // fallback to latest order
+  const orderIdParam = params.get('orderId');
+  const orderId = orderIdParam ? Number(orderIdParam) : NaN;
+  const validId = Number.isFinite(orderId) && orderId > 0;
 
-  useEffect(() => {
-    // Confetti could go here if we wanted
-  }, []);
+  const { data: order, isLoading, isError } = useGetOrder(validId ? orderId : 0, {
+    query: { enabled: validId },
+  });
 
-  if (!order) return null;
+  if (!validId) {
+    return (
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-muted-foreground mb-4">Pesanan tidak ditemukan.</p>
+        <Button onClick={() => setLocation('/menu')}>Kembali ke Menu</Button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-primary text-primary-foreground">
+        <Loader2 className="w-10 h-10 animate-spin" />
+        <p className="mt-4">Memuat pesanan...</p>
+      </div>
+    );
+  }
+
+  if (isError || !order) {
+    return (
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-muted-foreground mb-4">Pesanan tidak ditemukan.</p>
+        <Button onClick={() => setLocation('/menu')}>Kembali ke Menu</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] w-full max-w-md mx-auto bg-primary text-primary-foreground flex flex-col relative overflow-hidden">
-      {/* Decorative background element */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", damping: 15 }}
@@ -39,31 +61,30 @@ export default function Success() {
           <CheckCircle2 className="w-12 h-12" />
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
           <h1 className="text-3xl font-bold mb-2">Pembayaran Berhasil!</h1>
           <p className="text-primary-foreground/80 mb-8">
-            Pesananmu sedang disiapkan. Silakan tunggu di {order.table}, Karyawan kami akan mengantarkan pesanan ke tempat duduk kamu.
+            Pesananmu sedang disiapkan. Silakan tunggu di {order.tableNumber}, Karyawan kami akan mengantarkan pesanan ke tempat duduk kamu.
           </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
           className="bg-white text-foreground w-full rounded-2xl p-6 mb-8 text-left shadow-lg relative"
         >
-          {/* Receipt jagged edge effect */}
           <div className="absolute -top-2 left-0 w-full h-4 bg-[radial-gradient(circle_at_50%_0,transparent_4px,#fff_5px)] bg-[length:16px_10px] repeat-x"></div>
-          
+
           <div className="border-b border-dashed pb-4 mb-4 mt-2 text-center">
             <div className="text-sm text-muted-foreground uppercase tracking-widest mb-1">Nomor Pesanan</div>
-            <div className="font-mono text-2xl font-bold text-primary">{order.id}</div>
+            <div className="font-mono text-2xl font-bold text-primary">{order.orderCode}</div>
           </div>
-          
+
           <div className="space-y-3 mb-4 max-h-[40vh] overflow-y-auto">
             {order.items.map(item => (
               <div key={item.id} className="flex justify-between text-sm">
@@ -88,15 +109,15 @@ export default function Success() {
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
           className="w-full mt-auto"
         >
-          <Button 
-            variant="outline" 
-            size="lg" 
+          <Button
+            variant="outline"
+            size="lg"
             className="w-full h-14 text-lg rounded-xl bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white backdrop-blur-sm"
             onClick={() => setLocation('/menu')}
           >
