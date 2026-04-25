@@ -16,6 +16,10 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Artifacts
+
+- **CGV Snack Order** (`artifacts/cgv-snack-order`) — Mobile-first trial web app for QR-table self-ordering at CGV cinema snack bar. Pure frontend, state in localStorage. Routes: `/` landing, `/menu`, `/cart`, `/payment` (QRIS / VA BCA / VA Mandiri), `/success`, `/staff` (dashboard with CSV export). UI in Bahasa Indonesia, CGV red branding. Uses zustand for state.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages

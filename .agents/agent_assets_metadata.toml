@@ -1,0 +1,32 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "paNUTJ9_fTHTla9Kslz8r"
+uri = "file://artifacts/cgv-snack-order/src/assets/combo-solo.png"
+type = "image"
+title = "CGV Combo Solo"
+
+[[generated]]
+id = "7Fbvdt1HjVwh4su1RC_j6"
+uri = "file://artifacts/cgv-snack-order/src/assets/popcorn-caramel.png"
+type = "image"
+title = "Popcorn Caramel"
+
+[[generated]]
+id = "w01E1Jz4HkZNtB0xOP64F"
+uri = "file://artifacts/cgv-snack-order/src/assets/sausage-fries.png"
+type = "image"
+title = "Sausage & Fries"
+
+[[generated]]
+id = "rVB2Gs-v2zuZmI1dVbqRX"
+uri = "file://artifacts/cgv-snack-order/src/assets/hot-dog.png"
+type = "image"
+title = "Hot Dog Classic"
+
+[[generated]]
+id = "0E0wRoiD6076WeLbw1EYe"
+uri = "file://artifacts/cgv-snack-order/src/assets/coca-cola.png"
+type = "image"
+title = "Coca-Cola Drink"

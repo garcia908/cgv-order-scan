@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CGV Snack Order"
+version = "1.0.0"
+id = "artifacts/cgv-snack-order"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24927
+
+[services.development]
+run = "pnpm --filter @workspace/cgv-snack-order run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cgv-snack-order", "run", "build" ]
+publicDir = "artifacts/cgv-snack-order/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24927"
+BASE_PATH = "/"
