@@ -5,7 +5,7 @@ import { useAppStore } from '@/lib/store';
 import { menuItems } from '@/lib/data';
 import { Category } from '@/lib/types';
 import { formatRupiah } from '@/lib/format';
-import { Plus, ShoppingCart, Minus } from 'lucide-react';
+import { Plus, ShoppingCart, Minus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
