@@ -11,6 +11,7 @@ import {
   GetOrdersSummaryResponse,
   UpdateOrderStatusResponse,
 } from "@workspace/api-zod";
+import { sendOrderToTelegram } from "../lib/telegram";
 
 const router: IRouter = Router();
 
@@ -105,6 +106,18 @@ router.post("/orders", async (req, res): Promise<void> => {
     .set({ orderCode })
     .where(eq(ordersTable.id, inserted.id))
     .returning();
+
+  if (final) {
+    // Fire-and-forget Telegram notification — never block the response
+    void sendOrderToTelegram({
+      orderCode: final.orderCode,
+      tableNumber: final.tableNumber,
+      items: final.items,
+      total: final.total,
+      paymentMethod: final.paymentMethod,
+      createdAt: final.createdAt,
+    });
+  }
 
   res.status(201).json(GetOrderResponse.parse(final));
 });
