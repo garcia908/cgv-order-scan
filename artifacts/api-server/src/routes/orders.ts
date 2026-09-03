@@ -24,12 +24,36 @@ function buildOrderCode(id: number, createdAt: Date): string {
   return `CGV-${yyyy}${mm}${dd}-${seq}`;
 }
 
+type DeliveryInfo = {
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
+};
+
+function deliveryFromRow(row: {
+  tableNumber: string;
+  seatNumber: string | null;
+  auditorium: string | null;
+  customerName: string | null;
+}): DeliveryInfo {
+  return {
+    seatNumber: row.seatNumber?.trim() || "—",
+    auditorium: row.auditorium?.trim() || "—",
+    customerName: row.customerName?.trim() || "—",
+  };
+}
+
+function toApiOrder(row: typeof ordersTable.$inferSelect) {
+  const { tableNumber: _legacyTableNumber, seatNumber: _seatNumber, auditorium: _auditorium, customerName: _customerName, ...order } = row;
+  return { ...order, ...deliveryFromRow(row) };
+}
+
 router.get("/orders", requireAuth, async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(ordersTable)
     .orderBy(desc(ordersTable.createdAt));
-  res.json(ListOrdersResponse.parse(rows));
+  res.json(ListOrdersResponse.parse(rows.map(toApiOrder)));
 });
 
 router.get("/orders/summary", requireAuth, async (_req, res): Promise<void> => {
@@ -72,7 +96,7 @@ router.get("/orders/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(GetOrderResponse.parse(order));
+  res.json(GetOrderResponse.parse(toApiOrder(order)));
 });
 
 router.post("/orders", async (req, res): Promise<void> => {
@@ -98,7 +122,10 @@ router.post("/orders", async (req, res): Promise<void> => {
     .insert(ordersTable)
     .values({
       orderCode: "PENDING",
-      tableNumber: parsed.data.tableNumber,
+      tableNumber: "AUDITORIUM_ORDER",
+      seatNumber: parsed.data.seatNumber,
+      auditorium: parsed.data.auditorium,
+      customerName: parsed.data.customerName,
       items: parsed.data.items,
       subtotal: parsed.data.subtotal,
       total: parsed.data.total,
@@ -124,7 +151,9 @@ router.post("/orders", async (req, res): Promise<void> => {
     // Fire-and-forget Telegram notification — never block the response
     void sendOrderToTelegram({
       orderCode: final.orderCode,
-      tableNumber: final.tableNumber,
+      seatNumber: final.seatNumber ?? "—",
+      auditorium: final.auditorium ?? "—",
+      customerName: final.customerName ?? "—",
       items: final.items,
       total: final.total,
       paymentMethod: final.paymentMethod,
@@ -133,7 +162,7 @@ router.post("/orders", async (req, res): Promise<void> => {
     });
   }
 
-  res.status(201).json(GetOrderResponse.parse(final));
+  res.status(201).json(GetOrderResponse.parse(toApiOrder(final)));
 });
 
 router.patch("/orders/:id/status", requireAuth, async (req, res): Promise<void> => {
@@ -160,7 +189,7 @@ router.patch("/orders/:id/status", requireAuth, async (req, res): Promise<void> 
     return;
   }
 
-  res.json(UpdateOrderStatusResponse.parse(order));
+  res.json(UpdateOrderStatusResponse.parse(toApiOrder(order)));
 });
 
 router.delete("/orders", requireAuth, async (_req, res): Promise<void> => {

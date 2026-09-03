@@ -20,7 +20,9 @@ export interface CartItem {
 export interface Order {
   id: string;
   createdAt: number;
-  table: string;
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
   items: CartItem[];
   subtotal: number;
   total: number;

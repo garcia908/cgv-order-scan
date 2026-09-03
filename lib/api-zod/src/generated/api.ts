@@ -21,7 +21,9 @@ export const HealthCheckResponse = zod.object({
 export const ListOrdersResponseItem = zod.object({
   id: zod.number(),
   orderCode: zod.string(),
-  tableNumber: zod.string(),
+  seatNumber: zod.string(),
+  auditorium: zod.string(),
+  customerName: zod.string(),
   items: zod.array(
     zod.object({
       id: zod.string(),
@@ -44,7 +46,9 @@ export const ListOrdersResponse = zod.array(ListOrdersResponseItem);
  * @summary Create a new order
  */
 export const CreateOrderBody = zod.object({
-  tableNumber: zod.string(),
+  seatNumber: zod.string(),
+  auditorium: zod.string(),
+  customerName: zod.string(),
   items: zod.array(
     zod.object({
       id: zod.string(),
@@ -78,7 +82,9 @@ export const GetOrderParams = zod.object({
 export const GetOrderResponse = zod.object({
   id: zod.number(),
   orderCode: zod.string(),
-  tableNumber: zod.string(),
+  seatNumber: zod.string(),
+  auditorium: zod.string(),
+  customerName: zod.string(),
   items: zod.array(
     zod.object({
       id: zod.string(),
@@ -110,7 +116,9 @@ export const UpdateOrderStatusBody = zod.object({
 export const UpdateOrderStatusResponse = zod.object({
   id: zod.number(),
   orderCode: zod.string(),
-  tableNumber: zod.string(),
+  seatNumber: zod.string(),
+  auditorium: zod.string(),
+  customerName: zod.string(),
   items: zod.array(
     zod.object({
       id: zod.string(),

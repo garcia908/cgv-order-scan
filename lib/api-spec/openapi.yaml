@@ -185,7 +185,11 @@ components:
           type: integer
         orderCode:
           type: string
-        tableNumber:
+        seatNumber:
+          type: string
+        auditorium:
+          type: string
+        customerName:
           type: string
         items:
           type: array
@@ -211,7 +215,9 @@ components:
       required:
         - id
         - orderCode
-        - tableNumber
+        - seatNumber
+        - auditorium
+        - customerName
         - items
         - subtotal
         - total
@@ -222,7 +228,11 @@ components:
     CreateOrderInput:
       type: object
       properties:
-        tableNumber:
+        seatNumber:
+          type: string
+        auditorium:
+          type: string
+        customerName:
           type: string
         items:
           type: array
@@ -237,7 +247,7 @@ components:
         cashReceived:
           type: integer
           nullable: true
-      required: [tableNumber, items, subtotal, total, paymentMethod]
+      required: [seatNumber, auditorium, customerName, items, subtotal, total, paymentMethod]
     UpdateOrderStatusInput:
       type: object
       properties:

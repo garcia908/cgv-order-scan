@@ -12,7 +12,9 @@ import type { PaymentMethod } from "./paymentMethod";
 export interface Order {
   id: number;
   orderCode: string;
-  tableNumber: string;
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
   items: OrderItem[];
   subtotal: number;
   total: number;

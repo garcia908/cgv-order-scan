@@ -15,7 +15,6 @@ export default function Menu() {
   const [, setLocation] = useLocation();
   const [activeCategory, setActiveCategory] = useState<Category>('Combo');
   const cart = useAppStore(state => state.cart);
-  const tableNumber = useAppStore(state => state.tableNumber);
   const addToCart = useAppStore(state => state.addToCart);
   const removeFromCart = useAppStore(state => state.removeFromCart);
   const updateQty = useAppStore(state => state.updateQty);
@@ -55,9 +54,9 @@ export default function Menu() {
         <p className="font-bold text-foreground">Selamat Datang!</p>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           Pesan cemilan tanpa perlu antre.<br />
-          Pesanan akan diantar ke tempat duduk kamu.
+          Pesanan akan diantar ke bangkumu setelah kamu isi detail kursi.
         </p>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-primary">{tableNumber}</p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-primary">Satu barcode untuk semua pengunjung</p>
       </div>
 
       {/* Menu List */}

@@ -10,7 +10,11 @@ export type OrderItemRow = {
 export const ordersTable = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderCode: text("order_code").notNull().unique(),
+  // Kept for historical rows while delivery is represented by the fields below.
   tableNumber: text("table_number").notNull(),
+  seatNumber: text("seat_number"),
+  auditorium: text("auditorium"),
+  customerName: text("customer_name"),
   items: jsonb("items").$type<OrderItemRow[]>().notNull(),
   subtotal: integer("subtotal").notNull(),
   total: integer("total").notNull(),

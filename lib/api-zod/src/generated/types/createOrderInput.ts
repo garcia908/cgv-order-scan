@@ -9,7 +9,9 @@ import type { OrderItem } from "./orderItem";
 import type { PaymentMethod } from "./paymentMethod";
 
 export interface CreateOrderInput {
-  tableNumber: string;
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
   items: OrderItem[];
   subtotal: number;
   total: number;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { formatRupiah } from '@/lib/format';
 import { Download, Trash2, CheckCircle2, Clock, ChefHat, Loader2, RefreshCw, QrCode, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -39,8 +39,6 @@ export default function Staff() {
   const queryClient = useQueryClient();
   const { signOut } = useClerk();
   const { user } = useUser();
-  const [qrTable, setQrTable] = useState('A12');
-
   const { data: orders = [], isLoading, refetch, isFetching } = useListOrders({
     query: { queryKey: getListOrdersQueryKey(), refetchInterval: 5000 },
   });
@@ -54,10 +52,7 @@ export default function Staff() {
 
   const filteredOrders = orders.filter(o => statusFilter === 'semua' || o.status === statusFilter);
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-  const qrUrl = useMemo(
-    () => `${window.location.origin}${basePath}/?meja=${encodeURIComponent(qrTable.trim() || 'A12')}`,
-    [basePath, qrTable],
-  );
+  const qrUrl = `${window.location.origin}${basePath}/`;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
@@ -78,13 +73,13 @@ export default function Staff() {
   };
 
   const exportCSV = () => {
-    let csv = "Order ID,Waktu,Meja,Status,Metode Bayar,Uang Cash,Kembalian,Total,Items\n";
+    let csv = "Order ID,Waktu,Kursi,Auditorium,Atas Nama,Status,Metode Bayar,Uang Cash,Kembalian,Total,Items\n";
     orders.forEach(o => {
       const date = new Date(o.createdAt).toLocaleString('id-ID');
       const itemsStr = o.items.map(i => `${i.qty}x ${i.name}`).join('; ');
       const cashReceived = o.cashReceived ?? '';
       const change = o.cashReceived ? o.cashReceived - o.total : '';
-      csv += `${o.orderCode},"${date}",${o.tableNumber},${o.status},${paymentLabel(o.paymentMethod)},${cashReceived},${change},${o.total},"${itemsStr}"\n`;
+      csv += `${o.orderCode},"${date}",${o.seatNumber},${o.auditorium},"${o.customerName}",${o.status},${paymentLabel(o.paymentMethod)},${cashReceived},${change},${o.total},"${itemsStr}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
@@ -104,17 +99,17 @@ export default function Staff() {
   };
 
   const downloadQr = () => {
-    const svg = document.getElementById('table-qr-code');
+    const svg = document.getElementById('auditorium-qr-code');
     if (!svg) return;
     const source = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `qr-cgv-meja-${qrTable.trim() || 'A12'}.svg`;
+    link.download = 'qr-cgv-snack-bar-auditorium.svg';
     link.click();
     URL.revokeObjectURL(url);
-    toast.success('QR meja berhasil diunduh');
+    toast.success('QR auditorium berhasil diunduh');
   };
 
   const handleClearAll = () => {
@@ -135,7 +130,7 @@ export default function Staff() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">CGV Snack Bar Dashboard</h1>
-            <p className="text-muted-foreground">Kelola pesanan pelanggan dari meja</p>
+            <p className="text-muted-foreground">Kelola pesanan dan pengantaran ke bangku pelanggan</p>
             {user?.primaryEmailAddress?.emailAddress && (
               <p className="mt-1 text-xs text-muted-foreground">{user.primaryEmailAddress.emailAddress}</p>
             )}
@@ -177,19 +172,12 @@ export default function Staff() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <QrCode className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-bold">Buat QR Meja</h2>
+                <h2 className="text-lg font-bold">Barcode Auditorium</h2>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Pengunjung yang scan QR ini langsung masuk ke menu dengan meja yang sudah terisi.
+                <p className="text-sm text-muted-foreground mb-4">
+                 Satu barcode ini dipasang di pintu auditorium dan berlaku untuk semua pengunjung.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  value={qrTable}
-                  onChange={(event) => setQrTable(event.target.value)}
-                  placeholder="Contoh: A12"
-                  aria-label="Nomor meja untuk QR"
-                  className="h-10 flex-1 rounded-lg border border-input px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
                 <Button variant="outline" onClick={copyQrUrl}>
                   <Copy className="w-4 h-4 mr-2" /> Salin Link
                 </Button>
@@ -200,7 +188,7 @@ export default function Staff() {
               <p className="mt-3 break-all text-xs text-muted-foreground">{qrUrl}</p>
             </div>
             <div className="shrink-0 self-center rounded-xl border border-border bg-white p-3">
-              <QRCodeSVG id="table-qr-code" value={qrUrl} size={150} includeMargin />
+              <QRCodeSVG id="auditorium-qr-code" value={qrUrl} size={150} includeMargin aria-label="Barcode auditorium CGV Snack Bar" />
             </div>
           </div>
         </div>
@@ -241,7 +229,7 @@ export default function Staff() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID / Waktu</TableHead>
-                  <TableHead>Meja</TableHead>
+                  <TableHead>Lokasi & Pemesan</TableHead>
                   <TableHead>Items</TableHead>
                    <TableHead>Total / Pembayaran</TableHead>
                   <TableHead>Status</TableHead>
@@ -271,7 +259,8 @@ export default function Staff() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-bold">{order.tableNumber}</div>
+                        <div className="font-bold">{order.auditorium} · Kursi {order.seatNumber}</div>
+                        <div className="text-xs text-muted-foreground">Atas nama {order.customerName}</div>
                       </TableCell>
                       <TableCell className="max-w-[250px]">
                         <ul className="text-sm space-y-1">

@@ -4,28 +4,46 @@ import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { formatRupiah } from '@/lib/format';
-import { ArrowLeft, Banknote, CreditCard, QrCode, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Banknote, CreditCard, QrCode, Check, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useCreateOrder, getListOrdersQueryKey, getGetOrdersSummaryQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 type PaymentMethod = 'CASH' | 'QRIS' | 'DEBIT';
+const deliverySchema = z.object({
+  seatNumber: z.string().trim().min(1, 'Nomor kursi wajib diisi.'),
+  auditorium: z.string().trim().min(1, 'Nomor auditorium wajib diisi.'),
+  customerName: z.string().trim().min(1, 'Nama wajib diisi.'),
+});
+type DeliveryFormValues = z.infer<typeof deliverySchema>;
 
 export default function Payment() {
   const [, setLocation] = useLocation();
   const cart = useAppStore(state => state.cart);
-  const tableNumber = useAppStore(state => state.tableNumber);
+  const delivery = useAppStore(state => state.delivery);
+  const setDelivery = useAppStore(state => state.setDelivery);
+  const clearDelivery = useAppStore(state => state.clearDelivery);
   const clearCart = useAppStore(state => state.clearCart);
   const queryClient = useQueryClient();
   const createOrder = useCreateOrder();
 
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [cashReceived, setCashReceived] = useState('');
+  const form = useForm<DeliveryFormValues>({
+    resolver: zodResolver(deliverySchema),
+    defaultValues: delivery,
+    mode: 'onTouched',
+  });
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
-  const handleConfirm = () => {
+  const handleConfirm = (values: DeliveryFormValues) => {
     if (!method) return;
 
     const parsedCash = cashReceived === '' ? null : Number(cashReceived);
@@ -34,10 +52,13 @@ export default function Payment() {
       return;
     }
 
+    setDelivery(values);
     createOrder.mutate(
       {
         data: {
-          tableNumber,
+          seatNumber: values.seatNumber,
+          auditorium: values.auditorium,
+          customerName: values.customerName,
           items: cart.map(c => ({ id: c.id, name: c.name, qty: c.qty, price: c.price })),
           subtotal: total,
           total,
@@ -48,6 +69,7 @@ export default function Payment() {
       {
         onSuccess: (order) => {
           clearCart();
+          clearDelivery();
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetOrdersSummaryQueryKey() });
           setLocation(`/success?orderId=${order.id}`);
@@ -77,27 +99,84 @@ export default function Payment() {
         </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col gap-6">
+      <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleConfirm)} className="p-4 flex-1 flex flex-col gap-6">
+        <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <MapPin className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Detail pengantaran</h3>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Supaya staff menemukan bangkumu, isi tiga informasi berikut.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="seatNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kamu duduk di kursi berapa?</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Contoh: B12" autoComplete="off" data-testid="input-seat-number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="auditorium"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Auditorium berapa?</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Contoh: Auditorium 5" autoComplete="off" data-testid="input-auditorium" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="customerName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Atas nama siapa?</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Contoh: Budi" autoComplete="name" data-testid="input-customer-name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
+
         <div>
-          <h3 className="font-semibold mb-3">Pilih Metode Pembayaran</h3>
+          <h3 className="font-semibold mb-1">Pilih metode pembayaran</h3>
+          <p className="mb-3 text-sm text-muted-foreground">Pembayaran dilakukan saat staff datang ke bangkumu.</p>
           <div className="space-y-3">
             <PaymentCard
               title="Cash"
-              description="Bayar tunai saat staff mengantar pesanan"
+              description="Siapkan uang tunai saat pesanan diantar"
               icon={<Banknote />}
               selected={method === 'CASH'}
               onClick={() => setMethod('CASH')}
             />
             <PaymentCard
               title="QRIS"
-              description="Staff akan datang membawa EDC"
+              description="Ditunggu, staff akan datang ke bangkumu"
               icon={<QrCode />}
               selected={method === 'QRIS'}
               onClick={() => setMethod('QRIS')}
             />
             <PaymentCard
               title="Debit"
-              description="Staff akan datang membawa EDC"
+              description="Ditunggu, staff akan datang ke bangkumu"
               icon={<CreditCard />}
               selected={method === 'DEBIT'}
               onClick={() => setMethod('DEBIT')}
@@ -115,8 +194,8 @@ export default function Payment() {
 
             {method === 'CASH' && (
               <div>
-                <label htmlFor="cash-received" className="block text-sm font-semibold mb-2">
-                  Berapa jumlah uang yang kamu bawa?
+                  <label htmlFor="cash-received" className="block text-sm font-semibold mb-2">
+                   Uang kamu berapa?
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">Rp</span>
@@ -128,12 +207,13 @@ export default function Payment() {
                     step={1000}
                     value={cashReceived}
                     onChange={(event) => setCashReceived(event.target.value)}
-                    placeholder={String(total)}
+                     placeholder="Contoh: 100000"
+                     data-testid="input-cash-received"
                     className="h-12 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-lg font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  Staff akan datang membawa kembalian sesuai nominal uang yang kamu masukkan.
+                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                   Masukkan nominal uang yang kamu siapkan. Staff akan membawa kembalian.
                 </p>
                 {Number(cashReceived) >= total && (
                   <div className="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
@@ -148,27 +228,29 @@ export default function Payment() {
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                   {method === 'QRIS' ? <QrCode className="h-7 w-7" /> : <CreditCard className="h-7 w-7" />}
                 </div>
-                <p className="font-semibold text-foreground">Staff akan datang membawa EDC</p>
+                 <p className="font-semibold text-foreground">Ditunggu ya, staff akan datang ke bangkumu.</p>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Pembayaran dilakukan bersama staff saat pesanan diantar ke tempat duduk kamu.
+                   Tidak perlu mengisi nominal. Siapkan diri di kursimu, staff akan membantu pembayaran.
                 </p>
               </div>
             )}
           </motion.div>
         )}
-      </div>
+        <div className="h-4" />
+      </form>
+      </Form>
 
       <div className="fixed bottom-0 inset-x-0 w-full max-w-md mx-auto p-4 bg-white border-t border-border z-50">
         <Button
           size="lg"
           className="w-full h-14 text-lg rounded-xl"
           disabled={!method || createOrder.isPending}
-          onClick={handleConfirm}
+          onClick={() => void form.handleSubmit(handleConfirm)()}
         >
           {createOrder.isPending ? (
             <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Memproses...</>
           ) : (
-            'Kirim Pesanan ke Staff'
+            'Lanjutkan Pembayaran'
           )}
         </Button>
       </div>

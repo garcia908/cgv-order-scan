@@ -3,27 +3,31 @@ import { CartItem } from './types';
 
 interface AppState {
   cart: CartItem[];
-  tableNumber: string;
+  delivery: DeliveryDetails;
   addToCart: (item: Omit<CartItem, 'qty'>) => void;
   removeFromCart: (id: string) => void;
   updateQty: (id: string, delta: number) => void;
   clearCart: () => void;
-  setTableNumber: (table: string) => void;
+  setDelivery: (delivery: DeliveryDetails) => void;
+  clearDelivery: () => void;
+}
+
+export interface DeliveryDetails {
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
 }
 
 export const useAppStore = create<AppState>((set) => {
   let initialCart: CartItem[] = [];
-  let initialTable = 'Meja A12';
   try {
     const savedCart = localStorage.getItem('cgv_cart');
     if (savedCart) initialCart = JSON.parse(savedCart);
-    const savedTable = localStorage.getItem('cgv_table');
-    if (savedTable) initialTable = savedTable;
   } catch (e) {}
 
   return {
     cart: initialCart,
-    tableNumber: initialTable,
+    delivery: { seatNumber: '', auditorium: '', customerName: '' },
 
     addToCart: (item) => set((state) => {
       const existing = state.cart.find(c => c.id === item.id);
@@ -60,9 +64,9 @@ export const useAppStore = create<AppState>((set) => {
       return { cart: [] };
     }),
 
-    setTableNumber: (table) => set(() => {
-      localStorage.setItem('cgv_table', table);
-      return { tableNumber: table };
-    }),
+    setDelivery: (delivery) => set(() => ({ delivery })),
+    clearDelivery: () => set(() => ({
+      delivery: { seatNumber: '', auditorium: '', customerName: '' },
+    })),
   };
 });

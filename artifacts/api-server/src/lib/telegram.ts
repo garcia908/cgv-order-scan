@@ -8,7 +8,9 @@ type OrderItemPayload = {
 
 type OrderPayload = {
   orderCode: string;
-  tableNumber: string;
+  seatNumber: string;
+  auditorium: string;
+  customerName: string;
   items: OrderItemPayload[];
   total: number;
   paymentMethod: string;
@@ -18,8 +20,8 @@ type OrderPayload = {
 
 const PAYMENT_LABEL: Record<string, string> = {
   CASH: "Cash (dibayar saat diantar)",
-  QRIS: "QRIS (dibayar dengan EDC)",
-  DEBIT: "Debit (dibayar dengan EDC)",
+  QRIS: "QRIS (dibayar bersama staff)",
+  DEBIT: "Debit (dibayar bersama staff)",
   VA_BCA: "Virtual Account BCA (riwayat)",
   VA_MANDIRI: "Virtual Account Mandiri (riwayat)",
 };
@@ -55,13 +57,15 @@ function buildMessage(order: OrderPayload): string {
         ]
       : order.paymentMethod === "CASH"
         ? ["💵 Staff menagih pembayaran cash saat pesanan diantar."]
-        : ["🧾 Staff membawa EDC saat mengantar pesanan."];
+        : ["🧾 Ditunggu ya, staff akan datang ke bangkumu."];
 
   return [
     `🍿 <b>PESANAN BARU MASUK</b>`,
     ``,
     `🆔 <b>${escapeHtml(order.orderCode)}</b>`,
-    `📍 Meja: <b>${escapeHtml(order.tableNumber)}</b>`,
+    `🪑 Kursi: <b>${escapeHtml(order.seatNumber)}</b>`,
+    `🎬 Auditorium: <b>${escapeHtml(order.auditorium)}</b>`,
+    `👤 Atas nama: <b>${escapeHtml(order.customerName)}</b>`,
     `🕒 ${escapeHtml(time)}`,
     ``,
     `<b>Pesanan:</b>`,

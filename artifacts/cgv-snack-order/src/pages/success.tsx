@@ -66,9 +66,9 @@ export default function Success() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <h1 className="text-3xl font-bold mb-2">Pembayaran Berhasil!</h1>
+          <h1 className="text-3xl font-bold mb-2">Pesanan Diterima!</h1>
           <p className="text-primary-foreground/80 mb-8">
-            Pesananmu sedang disiapkan. Silakan tunggu di {order.tableNumber}, Karyawan kami akan mengantarkan pesanan ke tempat duduk kamu.
+            Pesananmu sedang disiapkan. Ditunggu ya, staff akan datang ke bangkumu di {order.auditorium}, kursi {order.seatNumber}.
           </p>
         </motion.div>
 
@@ -98,6 +98,11 @@ export default function Success() {
           </div>
 
           <div className="border-t border-dashed pt-4 mt-auto">
+            <div className="mb-3 rounded-xl bg-primary/5 p-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Auditorium</span><strong>{order.auditorium}</strong></div>
+              <div className="mt-1 flex justify-between"><span className="text-muted-foreground">Kursi</span><strong>{order.seatNumber}</strong></div>
+              <div className="mt-1 flex justify-between"><span className="text-muted-foreground">Atas nama</span><strong>{order.customerName}</strong></div>
+            </div>
             <div className="flex justify-between font-bold text-lg">
               <span>Total Bayar</span>
               <span className="text-primary">{formatRupiah(order.total)}</span>
@@ -137,7 +142,7 @@ export default function Success() {
 
 function paymentLabel(method: string) {
   if (method === 'CASH') return 'Cash — dibayar saat diantar';
-  if (method === 'QRIS') return 'QRIS — staff membawa EDC';
-  if (method === 'DEBIT') return 'Debit — staff membawa EDC';
+  if (method === 'QRIS') return 'QRIS — menunggu staff';
+  if (method === 'DEBIT') return 'Debit — menunggu staff';
   return method;
 }

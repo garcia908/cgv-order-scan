@@ -1,23 +1,13 @@
-import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/lib/store';
-import { Popcorn, ArrowRight } from 'lucide-react';
+import { Popcorn, ArrowRight, QrCode } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const setTableNumber = useAppStore(state => state.setTableNumber);
-  const tableNumber = useAppStore(state => state.tableNumber);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const meja = params.get('meja') ?? params.get('table');
-    if (meja) {
-      setTableNumber(`Meja ${meja}`);
-      setLocation('/menu');
-    }
-  }, [setLocation, setTableNumber]);
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const qrUrl = `${window.location.origin}${basePath}/`;
 
   return (
     <div className="min-h-[100dvh] w-full max-w-md mx-auto flex flex-col bg-white relative overflow-hidden">
@@ -45,7 +35,7 @@ export default function Landing() {
           <h1 className="text-2xl font-bold text-foreground mb-2">Selamat Datang!</h1>
           <p className="text-muted-foreground">
             Pesan cemilan tanpa perlu antre.<br />
-            Pesanan akan diantar ke tempat duduk kamu.
+            Pesanan akan diantar langsung ke bangkumu.
           </p>
         </motion.div>
 
@@ -53,10 +43,24 @@ export default function Landing() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-muted w-full rounded-2xl p-6 mb-12 border border-border/50 shadow-sm"
+          className="bg-muted w-full rounded-2xl p-6 mb-10 border border-border/50 shadow-sm"
         >
-          <div className="text-sm text-muted-foreground font-medium mb-1">Lokasi Kamu</div>
-          <div className="text-2xl font-bold text-foreground">{tableNumber}</div>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground font-semibold mb-4">
+            <QrCode className="h-4 w-4 text-primary" />
+            <span>Satu barcode untuk semua pengunjung</span>
+          </div>
+          <div className="mx-auto w-fit rounded-2xl bg-white p-4 shadow-sm">
+            <QRCodeSVG
+              id="auditorium-qr-code"
+              value={qrUrl}
+              size={220}
+              includeMargin
+              level="M"
+              aria-label="Barcode CGV Snack Bar untuk membuka menu"
+            />
+          </div>
+          <p className="mt-4 text-sm font-medium text-foreground">Scan untuk mulai pesan snack</p>
+          <p className="mt-1 text-xs text-muted-foreground">Barcode ini berlaku untuk semua kursi di auditorium.</p>
         </motion.div>
 
         <motion.div 
@@ -76,14 +80,14 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">2</div>
             <div>
               <div className="font-semibold text-foreground">Bayar dengan Mudah</div>
-              <div className="text-sm text-muted-foreground">Pilih cash, QRIS, atau debit dan staff akan membantu pembayarannya.</div>
+              <div className="text-sm text-muted-foreground">Pilih cash, QRIS, atau debit sesuai kebutuhanmu.</div>
             </div>
           </div>
           <div className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">3</div>
             <div>
-              <div className="font-semibold text-foreground">Tunggu di Tempat Duduk</div>
-              <div className="text-sm text-muted-foreground">Karyawan kami akan mengantarkan pesananmu.</div>
+              <div className="font-semibold text-foreground">Tunggu di Bangkumu</div>
+              <div className="text-sm text-muted-foreground">Staff akan datang ke bangkumu membawa pesanan.</div>
             </div>
           </div>
         </motion.div>
