@@ -1,15 +1,16 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { formatRupiah } from '@/lib/format';
-import { ArrowLeft, Wallet, Building2, QrCode, Check, Copy, Loader2 } from 'lucide-react';
+import { ArrowLeft, Banknote, CreditCard, QrCode, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useCreateOrder, getListOrdersQueryKey, getGetOrdersSummaryQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 
-type PaymentMethod = 'QRIS' | 'VA_BCA' | 'VA_MANDIRI';
+type PaymentMethod = 'CASH' | 'QRIS' | 'DEBIT';
 
 export default function Payment() {
   const [, setLocation] = useLocation();
@@ -20,11 +21,18 @@ export default function Payment() {
   const createOrder = useCreateOrder();
 
   const [method, setMethod] = useState<PaymentMethod | null>(null);
+  const [cashReceived, setCashReceived] = useState('');
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
   const handleConfirm = () => {
     if (!method) return;
+
+    const parsedCash = cashReceived === '' ? null : Number(cashReceived);
+    if (method === 'CASH' && (parsedCash === null || !Number.isInteger(parsedCash) || parsedCash < total)) {
+      toast.error('Masukkan nominal uang yang sama atau lebih besar dari total pesanan.');
+      return;
+    }
 
     createOrder.mutate(
       {
@@ -34,6 +42,7 @@ export default function Payment() {
           subtotal: total,
           total,
           paymentMethod: method,
+          cashReceived: method === 'CASH' ? parsedCash : null,
         },
       },
       {
@@ -49,11 +58,6 @@ export default function Payment() {
         },
       },
     );
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Disalin ke clipboard');
   };
 
   if (cart.length === 0) {
@@ -78,25 +82,25 @@ export default function Payment() {
           <h3 className="font-semibold mb-3">Pilih Metode Pembayaran</h3>
           <div className="space-y-3">
             <PaymentCard
-              id="QRIS"
-              title="QRIS (Semua E-Wallet)"
+              title="Cash"
+              description="Bayar tunai saat staff mengantar pesanan"
+              icon={<Banknote />}
+              selected={method === 'CASH'}
+              onClick={() => setMethod('CASH')}
+            />
+            <PaymentCard
+              title="QRIS"
+              description="Staff akan datang membawa EDC"
               icon={<QrCode />}
               selected={method === 'QRIS'}
               onClick={() => setMethod('QRIS')}
             />
             <PaymentCard
-              id="VA_BCA"
-              title="Virtual Account BCA"
-              icon={<Building2 />}
-              selected={method === 'VA_BCA'}
-              onClick={() => setMethod('VA_BCA')}
-            />
-            <PaymentCard
-              id="VA_MANDIRI"
-              title="Virtual Account Mandiri"
-              icon={<Wallet />}
-              selected={method === 'VA_MANDIRI'}
-              onClick={() => setMethod('VA_MANDIRI')}
+              title="Debit"
+              description="Staff akan datang membawa EDC"
+              icon={<CreditCard />}
+              selected={method === 'DEBIT'}
+              onClick={() => setMethod('DEBIT')}
             />
           </div>
         </div>
@@ -109,25 +113,45 @@ export default function Payment() {
           >
             <h4 className="font-bold text-center mb-4 border-b pb-4">Instruksi Pembayaran</h4>
 
-            {method === 'QRIS' && (
-              <div className="flex flex-col items-center text-center">
-                <div className="w-48 h-48 bg-muted mb-4 rounded-xl flex items-center justify-center border-4 border-primary/20">
-                  <QrCode className="w-24 h-24 text-muted-foreground opacity-50" />
+            {method === 'CASH' && (
+              <div>
+                <label htmlFor="cash-received" className="block text-sm font-semibold mb-2">
+                  Berapa jumlah uang yang kamu bawa?
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">Rp</span>
+                  <input
+                    id="cash-received"
+                    type="number"
+                    inputMode="numeric"
+                    min={total}
+                    step={1000}
+                    value={cashReceived}
+                    onChange={(event) => setCashReceived(event.target.value)}
+                    placeholder={String(total)}
+                    className="h-12 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-lg font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">Scan QR code di atas menggunakan aplikasi E-Wallet atau Mobile Banking Anda.</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Staff akan datang membawa kembalian sesuai nominal uang yang kamu masukkan.
+                </p>
+                {Number(cashReceived) >= total && (
+                  <div className="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+                    Perkiraan kembalian: <strong>{formatRupiah(Number(cashReceived) - total)}</strong>
+                  </div>
+                )}
               </div>
             )}
 
-            {(method === 'VA_BCA' || method === 'VA_MANDIRI') && (
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Nomor Virtual Account {method === 'VA_BCA' ? 'BCA' : 'Mandiri'}:</p>
-                <div className="flex items-center justify-center gap-3 bg-muted p-3 rounded-lg mb-4">
-                  <span className="font-mono text-xl font-bold tracking-widest text-primary">8808 1234 5678 9012</span>
-                  <button onClick={() => copyToClipboard('8808123456789012')} className="text-muted-foreground hover:text-primary">
-                    <Copy className="w-5 h-5" />
-                  </button>
+            {(method === 'QRIS' || method === 'DEBIT') && (
+              <div className="rounded-xl bg-primary/5 p-4 text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  {method === 'QRIS' ? <QrCode className="h-7 w-7" /> : <CreditCard className="h-7 w-7" />}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">Silakan transfer sesuai nominal ke nomor Virtual Account di atas.</p>
+                <p className="font-semibold text-foreground">Staff akan datang membawa EDC</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Pembayaran dilakukan bersama staff saat pesanan diantar ke tempat duduk kamu.
+                </p>
               </div>
             )}
           </motion.div>
@@ -144,7 +168,7 @@ export default function Payment() {
           {createOrder.isPending ? (
             <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Memproses...</>
           ) : (
-            'Saya Sudah Bayar'
+            'Kirim Pesanan ke Staff'
           )}
         </Button>
       </div>
@@ -152,21 +176,25 @@ export default function Payment() {
   );
 }
 
-function PaymentCard({ id, title, icon, selected, onClick }: any) {
+function PaymentCard({ title, description, icon, selected, onClick }: { title: string; description: string; icon: ReactNode; selected: boolean; onClick: () => void }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`p-4 rounded-xl border-2 flex items-center gap-4 cursor-pointer transition-all ${
+      className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 text-left transition-all ${
         selected ? 'border-primary bg-primary/5' : 'border-border bg-white hover:bg-muted/50'
       }`}
     >
       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selected ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
         {icon}
       </div>
-      <span className="font-medium flex-1">{title}</span>
+       <span className="flex-1">
+         <span className="block font-semibold">{title}</span>
+         <span className="mt-1 block text-xs font-normal text-muted-foreground">{description}</span>
+       </span>
       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selected ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
         {selected && <Check className="w-4 h-4 text-white" />}
       </div>
-    </div>
+    </button>
   );
 }

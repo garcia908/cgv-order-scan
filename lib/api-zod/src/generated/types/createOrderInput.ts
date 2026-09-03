@@ -14,4 +14,5 @@ export interface CreateOrderInput {
   subtotal: number;
   total: number;
   paymentMethod: PaymentMethod;
+  cashReceived?: number | null;
 }

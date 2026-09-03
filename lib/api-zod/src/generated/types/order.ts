@@ -17,6 +17,7 @@ export interface Order {
   subtotal: number;
   total: number;
   paymentMethod: PaymentMethod;
+  cashReceived?: number | null;
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;

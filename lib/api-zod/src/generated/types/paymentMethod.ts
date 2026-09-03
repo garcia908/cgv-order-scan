@@ -9,7 +9,9 @@
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 
 export const PaymentMethod = {
+  CASH: "CASH",
   QRIS: "QRIS",
+  DEBIT: "DEBIT",
   VA_BCA: "VA_BCA",
   VA_MANDIRI: "VA_MANDIRI",
 } as const;

@@ -12,13 +12,16 @@ type OrderPayload = {
   items: OrderItemPayload[];
   total: number;
   paymentMethod: string;
+  cashReceived?: number | null;
   createdAt: Date | string;
 };
 
 const PAYMENT_LABEL: Record<string, string> = {
-  QRIS: "QRIS",
-  VA_BCA: "Virtual Account BCA",
-  VA_MANDIRI: "Virtual Account Mandiri",
+  CASH: "Cash (dibayar saat diantar)",
+  QRIS: "QRIS (dibayar dengan EDC)",
+  DEBIT: "Debit (dibayar dengan EDC)",
+  VA_BCA: "Virtual Account BCA (riwayat)",
+  VA_MANDIRI: "Virtual Account Mandiri (riwayat)",
 };
 
 function formatRupiah(amount: number): string {
@@ -44,6 +47,15 @@ function buildMessage(order: OrderPayload): string {
     .join("\n");
 
   const payment = PAYMENT_LABEL[order.paymentMethod] ?? order.paymentMethod;
+  const paymentDetails =
+    order.paymentMethod === "CASH" && order.cashReceived
+      ? [
+          `💵 Uang disiapkan: <b>${formatRupiah(order.cashReceived)}</b>`,
+          `↩️ Perkiraan kembalian: <b>${formatRupiah(order.cashReceived - order.total)}</b>`,
+        ]
+      : order.paymentMethod === "CASH"
+        ? ["💵 Staff menagih pembayaran cash saat pesanan diantar."]
+        : ["🧾 Staff membawa EDC saat mengantar pesanan."];
 
   return [
     `🍿 <b>PESANAN BARU MASUK</b>`,
@@ -57,6 +69,7 @@ function buildMessage(order: OrderPayload): string {
     ``,
     `💰 Total: <b>${formatRupiah(order.total)}</b>`,
     `💳 Pembayaran: ${escapeHtml(payment)}`,
+    ...paymentDetails,
     ``,
     `Status: <i>baru</i> — silakan disiapkan.`,
   ].join("\n");

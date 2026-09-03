@@ -15,6 +15,7 @@ export default function Menu() {
   const [, setLocation] = useLocation();
   const [activeCategory, setActiveCategory] = useState<Category>('Combo');
   const cart = useAppStore(state => state.cart);
+  const tableNumber = useAppStore(state => state.tableNumber);
   const addToCart = useAppStore(state => state.addToCart);
   const removeFromCart = useAppStore(state => state.removeFromCart);
   const updateQty = useAppStore(state => state.updateQty);
@@ -48,6 +49,15 @@ export default function Menu() {
           </div>
           <ScrollBar orientation="horizontal" className="hidden" />
         </ScrollArea>
+      </div>
+
+      <div className="mx-4 mt-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+        <p className="font-bold text-foreground">Selamat Datang!</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Pesan cemilan tanpa perlu antre.<br />
+          Pesanan akan diantar ke tempat duduk kamu.
+        </p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-primary">{tableNumber}</p>
       </div>
 
       {/* Menu List */}

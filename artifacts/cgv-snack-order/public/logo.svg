@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 72" role="img" aria-labelledby="title desc">
+  <title id="title">CGV Snack Bar</title>
+  <desc id="desc">CGV Snack Bar logo</desc>
+  <rect width="240" height="72" rx="16" fill="#e31e24"/>
+  <path d="M28 21h18c8 0 13 4 13 10 0 4-2 7-6 8 5 1 8 5 8 10 0 7-6 12-15 12H28V21Zm11 8v10h6c3 0 5-2 5-5s-2-5-5-5h-6Zm0 18v11h7c4 0 6-2 6-6s-2-5-6-5h-7Z" fill="#fff"/>
+  <text x="79" y="45" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="700">CGV</text>
+  <text x="137" y="45" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="600">SNACK BAR</text>
+</svg>

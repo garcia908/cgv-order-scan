@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { formatRupiah } from '@/lib/format';
 import { CheckCircle2, UtensilsCrossed, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useGetOrder } from '@workspace/api-client-react';
+import { useGetOrder, getGetOrderQueryKey } from '@workspace/api-client-react';
 
 export default function Success() {
   const [, setLocation] = useLocation();
@@ -14,7 +14,7 @@ export default function Success() {
   const validId = Number.isFinite(orderId) && orderId > 0;
 
   const { data: order, isLoading, isError } = useGetOrder(validId ? orderId : 0, {
-    query: { enabled: validId },
+    query: { queryKey: getGetOrderQueryKey(validId ? orderId : 0), enabled: validId },
   });
 
   if (!validId) {
@@ -104,8 +104,14 @@ export default function Success() {
             </div>
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>Metode</span>
-              <span>{order.paymentMethod}</span>
+              <span>{paymentLabel(order.paymentMethod)}</span>
             </div>
+            {order.paymentMethod === 'CASH' && order.cashReceived !== null && order.cashReceived !== undefined && (
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Perkiraan kembalian</span>
+                <span>{formatRupiah(order.cashReceived - order.total)}</span>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -127,4 +133,11 @@ export default function Success() {
       </div>
     </div>
   );
+}
+
+function paymentLabel(method: string) {
+  if (method === 'CASH') return 'Cash — dibayar saat diantar';
+  if (method === 'QRIS') return 'QRIS — staff membawa EDC';
+  if (method === 'DEBIT') return 'Debit — staff membawa EDC';
+  return method;
 }

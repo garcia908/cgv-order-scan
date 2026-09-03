@@ -24,6 +24,6 @@ export interface Order {
   items: CartItem[];
   subtotal: number;
   total: number;
-  paymentMethod: 'QRIS' | 'VA_BCA' | 'VA_MANDIRI';
+  paymentMethod: 'CASH' | 'QRIS' | 'DEBIT';
   status: 'baru' | 'disiapkan' | 'selesai';
 }

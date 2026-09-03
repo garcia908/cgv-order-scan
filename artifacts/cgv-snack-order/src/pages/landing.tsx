@@ -12,11 +12,12 @@ export default function Landing() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const meja = params.get('meja');
+    const meja = params.get('meja') ?? params.get('table');
     if (meja) {
       setTableNumber(`Meja ${meja}`);
+      setLocation('/menu');
     }
-  }, [setTableNumber]);
+  }, [setLocation, setTableNumber]);
 
   return (
     <div className="min-h-[100dvh] w-full max-w-md mx-auto flex flex-col bg-white relative overflow-hidden">
@@ -75,7 +76,7 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">2</div>
             <div>
               <div className="font-semibold text-foreground">Bayar dengan Mudah</div>
-              <div className="text-sm text-muted-foreground">Pilih metode pembayaran (QRIS / VA).</div>
+              <div className="text-sm text-muted-foreground">Pilih cash, QRIS, atau debit dan staff akan membantu pembayarannya.</div>
             </div>
           </div>
           <div className="flex items-start gap-4">

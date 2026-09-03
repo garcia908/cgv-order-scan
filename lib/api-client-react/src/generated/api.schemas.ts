@@ -31,7 +31,9 @@ export const OrderStatus = {
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 
 export const PaymentMethod = {
+  CASH: "CASH",
   QRIS: "QRIS",
+  DEBIT: "DEBIT",
   VA_BCA: "VA_BCA",
   VA_MANDIRI: "VA_MANDIRI",
 } as const;
@@ -44,6 +46,7 @@ export interface Order {
   subtotal: number;
   total: number;
   paymentMethod: PaymentMethod;
+  cashReceived?: number | null;
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
@@ -55,6 +58,7 @@ export interface CreateOrderInput {
   subtotal: number;
   total: number;
   paymentMethod: PaymentMethod;
+  cashReceived?: number | null;
 }
 
 export interface UpdateOrderStatusInput {

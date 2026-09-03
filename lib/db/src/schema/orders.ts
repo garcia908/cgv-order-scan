@@ -15,6 +15,7 @@ export const ordersTable = pgTable("orders", {
   subtotal: integer("subtotal").notNull(),
   total: integer("total").notNull(),
   paymentMethod: text("payment_method").notNull(),
+  cashReceived: integer("cash_received"),
   status: text("status").notNull().default("baru"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })

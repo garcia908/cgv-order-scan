@@ -175,7 +175,9 @@ components:
       enum: [baru, disiapkan, selesai]
     PaymentMethod:
       type: string
-      enum: [QRIS, VA_BCA, VA_MANDIRI]
+      # VA values remain readable for historical orders; new checkout only offers
+      # CASH, QRIS, and DEBIT.
+      enum: [CASH, QRIS, DEBIT, VA_BCA, VA_MANDIRI]
     Order:
       type: object
       properties:
@@ -195,6 +197,9 @@ components:
           type: integer
         paymentMethod:
           $ref: "#/components/schemas/PaymentMethod"
+        cashReceived:
+          type: integer
+          nullable: true
         status:
           $ref: "#/components/schemas/OrderStatus"
         createdAt:
@@ -229,6 +234,9 @@ components:
           type: integer
         paymentMethod:
           $ref: "#/components/schemas/PaymentMethod"
+        cashReceived:
+          type: integer
+          nullable: true
       required: [tableNumber, items, subtotal, total, paymentMethod]
     UpdateOrderStatusInput:
       type: object

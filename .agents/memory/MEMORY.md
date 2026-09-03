@@ -1,0 +1,2 @@
+- [Payment method compatibility](payment-method-compatibility.md) — keep legacy payment values readable in history when changing the customer-facing payment choices.
+- [Clerk React compatibility](clerk-react-compatibility.md) — keep the app on a Clerk-supported React patch version to avoid runtime hook failures.

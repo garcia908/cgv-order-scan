@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { formatRupiah } from '@/lib/format';
-import { Download, Trash2, CheckCircle2, Clock, ChefHat, Loader2, RefreshCw } from 'lucide-react';
+import { Download, Trash2, CheckCircle2, Clock, ChefHat, Loader2, RefreshCw, QrCode, Copy } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -32,15 +33,19 @@ import {
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Order, OrderStatus } from '@workspace/api-client-react';
+import { useClerk, useUser } from '@clerk/react';
 
 export default function Staff() {
   const queryClient = useQueryClient();
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const [qrTable, setQrTable] = useState('A12');
 
   const { data: orders = [], isLoading, refetch, isFetching } = useListOrders({
-    query: { refetchInterval: 5000 },
+    query: { queryKey: getListOrdersQueryKey(), refetchInterval: 5000 },
   });
   const { data: summary } = useGetOrdersSummary({
-    query: { refetchInterval: 5000 },
+    query: { queryKey: getGetOrdersSummaryQueryKey(), refetchInterval: 5000 },
   });
   const updateStatus = useUpdateOrderStatus();
   const clearOrders = useClearOrders();
@@ -48,6 +53,11 @@ export default function Staff() {
   const [statusFilter, setStatusFilter] = useState<'semua'|'baru'|'disiapkan'|'selesai'>('semua');
 
   const filteredOrders = orders.filter(o => statusFilter === 'semua' || o.status === statusFilter);
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const qrUrl = useMemo(
+    () => `${window.location.origin}${basePath}/?meja=${encodeURIComponent(qrTable.trim() || 'A12')}`,
+    [basePath, qrTable],
+  );
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
@@ -68,11 +78,13 @@ export default function Staff() {
   };
 
   const exportCSV = () => {
-    let csv = "Order ID,Waktu,Meja,Status,Metode Bayar,Total,Items\n";
+    let csv = "Order ID,Waktu,Meja,Status,Metode Bayar,Uang Cash,Kembalian,Total,Items\n";
     orders.forEach(o => {
       const date = new Date(o.createdAt).toLocaleString('id-ID');
       const itemsStr = o.items.map(i => `${i.qty}x ${i.name}`).join('; ');
-      csv += `${o.orderCode},"${date}",${o.tableNumber},${o.status},${o.paymentMethod},${o.total},"${itemsStr}"\n`;
+      const cashReceived = o.cashReceived ?? '';
+      const change = o.cashReceived ? o.cashReceived - o.total : '';
+      csv += `${o.orderCode},"${date}",${o.tableNumber},${o.status},${paymentLabel(o.paymentMethod)},${cashReceived},${change},${o.total},"${itemsStr}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
@@ -84,6 +96,25 @@ export default function Staff() {
     link.click();
     document.body.removeChild(link);
     toast.success('File CSV berhasil didownload');
+  };
+
+  const copyQrUrl = async () => {
+    await navigator.clipboard.writeText(qrUrl);
+    toast.success('Link QR berhasil disalin');
+  };
+
+  const downloadQr = () => {
+    const svg = document.getElementById('table-qr-code');
+    if (!svg) return;
+    const source = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `qr-cgv-meja-${qrTable.trim() || 'A12'}.svg`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('QR meja berhasil diunduh');
   };
 
   const handleClearAll = () => {
@@ -105,8 +136,14 @@ export default function Staff() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">CGV Snack Bar Dashboard</h1>
             <p className="text-muted-foreground">Kelola pesanan pelanggan dari meja</p>
+            {user?.primaryEmailAddress?.emailAddress && (
+              <p className="mt-1 text-xs text-muted-foreground">{user.primaryEmailAddress.emailAddress}</p>
+            )}
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" onClick={() => signOut({ redirectUrl: '/' })}>
+              Keluar
+            </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} /> Refresh
             </Button>
@@ -132,6 +169,39 @@ export default function Staff() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-border p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <QrCode className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-bold">Buat QR Meja</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Pengunjung yang scan QR ini langsung masuk ke menu dengan meja yang sudah terisi.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  value={qrTable}
+                  onChange={(event) => setQrTable(event.target.value)}
+                  placeholder="Contoh: A12"
+                  aria-label="Nomor meja untuk QR"
+                  className="h-10 flex-1 rounded-lg border border-input px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <Button variant="outline" onClick={copyQrUrl}>
+                  <Copy className="w-4 h-4 mr-2" /> Salin Link
+                </Button>
+                <Button onClick={downloadQr}>
+                  <Download className="w-4 h-4 mr-2" /> Unduh QR
+                </Button>
+              </div>
+              <p className="mt-3 break-all text-xs text-muted-foreground">{qrUrl}</p>
+            </div>
+            <div className="shrink-0 self-center rounded-xl border border-border bg-white p-3">
+              <QRCodeSVG id="table-qr-code" value={qrUrl} size={150} includeMargin />
+            </div>
           </div>
         </div>
 
@@ -173,7 +243,7 @@ export default function Staff() {
                   <TableHead>Order ID / Waktu</TableHead>
                   <TableHead>Meja</TableHead>
                   <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
+                   <TableHead>Total / Pembayaran</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
@@ -213,8 +283,14 @@ export default function Staff() {
                         </ul>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold">{formatRupiah(order.total)}</div>
-                        <div className="text-xs text-muted-foreground">{order.paymentMethod}</div>
+                         <div className="font-semibold">{formatRupiah(order.total)}</div>
+                         <div className="text-xs font-medium text-primary">{paymentLabel(order.paymentMethod)}</div>
+                         {order.paymentMethod === 'CASH' && order.cashReceived !== null && order.cashReceived !== undefined && (
+                           <div className="mt-1 text-xs text-muted-foreground">
+                             Uang: {formatRupiah(order.cashReceived)}<br />
+                             Kembalian: {formatRupiah(order.cashReceived - order.total)}
+                           </div>
+                         )}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={order.status} />
@@ -257,4 +333,11 @@ function StatusBadge({ status }: { status: string }) {
     default:
       return <span>{status}</span>;
   }
+}
+
+function paymentLabel(method: string) {
+  if (method === 'CASH') return 'Cash';
+  if (method === 'QRIS') return 'QRIS + EDC';
+  if (method === 'DEBIT') return 'Debit + EDC';
+  return method;
 }

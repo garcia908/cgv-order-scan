@@ -12,6 +12,7 @@ import {
   UpdateOrderStatusResponse,
 } from "@workspace/api-zod";
 import { sendOrderToTelegram } from "../lib/telegram";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -23,7 +24,7 @@ function buildOrderCode(id: number, createdAt: Date): string {
   return `CGV-${yyyy}${mm}${dd}-${seq}`;
 }
 
-router.get("/orders", async (_req, res): Promise<void> => {
+router.get("/orders", requireAuth, async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(ordersTable)
@@ -31,7 +32,7 @@ router.get("/orders", async (_req, res): Promise<void> => {
   res.json(ListOrdersResponse.parse(rows));
 });
 
-router.get("/orders/summary", async (_req, res): Promise<void> => {
+router.get("/orders/summary", requireAuth, async (_req, res): Promise<void> => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -81,6 +82,17 @@ router.post("/orders", async (req, res): Promise<void> => {
     return;
   }
 
+  const cashReceived = parsed.data.cashReceived ?? null;
+  if (parsed.data.paymentMethod === "CASH") {
+    if (cashReceived === null || !Number.isInteger(cashReceived) || cashReceived < parsed.data.total) {
+      res.status(400).json({ error: "Nominal uang tunai harus sama atau lebih besar dari total pesanan" });
+      return;
+    }
+  } else if (cashReceived !== null) {
+    res.status(400).json({ error: "Nominal uang tunai hanya diperlukan untuk pembayaran cash" });
+    return;
+  }
+
   // Insert with placeholder code, then update with real code based on id+date.
   const [inserted] = await db
     .insert(ordersTable)
@@ -91,6 +103,7 @@ router.post("/orders", async (req, res): Promise<void> => {
       subtotal: parsed.data.subtotal,
       total: parsed.data.total,
       paymentMethod: parsed.data.paymentMethod,
+      cashReceived,
       status: "baru",
     })
     .returning();
@@ -115,6 +128,7 @@ router.post("/orders", async (req, res): Promise<void> => {
       items: final.items,
       total: final.total,
       paymentMethod: final.paymentMethod,
+      cashReceived: final.cashReceived,
       createdAt: final.createdAt,
     });
   }
@@ -122,7 +136,7 @@ router.post("/orders", async (req, res): Promise<void> => {
   res.status(201).json(GetOrderResponse.parse(final));
 });
 
-router.patch("/orders/:id/status", async (req, res): Promise<void> => {
+router.patch("/orders/:id/status", requireAuth, async (req, res): Promise<void> => {
   const params = UpdateOrderStatusParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -149,7 +163,7 @@ router.patch("/orders/:id/status", async (req, res): Promise<void> => {
   res.json(UpdateOrderStatusResponse.parse(order));
 });
 
-router.delete("/orders", async (_req, res): Promise<void> => {
+router.delete("/orders", requireAuth, async (_req, res): Promise<void> => {
   await db.delete(ordersTable);
   res.sendStatus(204);
 });
