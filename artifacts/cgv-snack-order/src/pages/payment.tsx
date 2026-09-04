@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
@@ -23,6 +23,11 @@ const deliverySchema = z.object({
 });
 type DeliveryFormValues = z.infer<typeof deliverySchema>;
 
+function parseCashAmount(value: string) {
+  const digits = value.replace(/\D/g, '');
+  return digits === '' ? null : Number(digits);
+}
+
 export default function Payment() {
   const [, setLocation] = useLocation();
   const cart = useAppStore(state => state.cart);
@@ -35,6 +40,7 @@ export default function Payment() {
 
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [cashReceived, setCashReceived] = useState('');
+  const instructionRef = useRef<HTMLDivElement>(null);
   const form = useForm<DeliveryFormValues>({
     resolver: zodResolver(deliverySchema),
     defaultValues: delivery,
@@ -43,10 +49,17 @@ export default function Payment() {
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
+  useEffect(() => {
+    if (!method) return;
+    requestAnimationFrame(() => {
+      instructionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [method]);
+
   const handleConfirm = (values: DeliveryFormValues) => {
     if (!method) return;
 
-    const parsedCash = cashReceived === '' ? null : Number(cashReceived);
+    const parsedCash = parseCashAmount(cashReceived);
     if (method === 'CASH' && (parsedCash === null || !Number.isInteger(parsedCash) || parsedCash < total)) {
       toast.error('Masukkan nominal uang yang sama atau lebih besar dari total pesanan.');
       return;
@@ -107,7 +120,7 @@ export default function Payment() {
               <MapPin className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold">Detail pengantaran</h3>
+           <h3 className="font-semibold">Detail pengantaran 📍</h3>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 Supaya staff menemukan bangkumu, isi tiga informasi berikut.
               </p>
@@ -157,25 +170,25 @@ export default function Payment() {
         </section>
 
         <div>
-          <h3 className="font-semibold mb-1">Pilih metode pembayaran</h3>
+           <h3 className="font-semibold mb-1">Pilih metode pembayaran 💳</h3>
           <p className="mb-3 text-sm text-muted-foreground">Pembayaran dilakukan saat staff datang ke bangkumu.</p>
           <div className="space-y-3">
             <PaymentCard
-              title="Cash"
+             title="Cash 💵"
               description="Siapkan uang tunai saat pesanan diantar"
               icon={<Banknote />}
               selected={method === 'CASH'}
               onClick={() => setMethod('CASH')}
             />
             <PaymentCard
-              title="QRIS"
+             title="QRIS 📱"
               description="Ditunggu, staff akan datang ke bangkumu"
               icon={<QrCode />}
               selected={method === 'QRIS'}
               onClick={() => setMethod('QRIS')}
             />
             <PaymentCard
-              title="Debit"
+             title="Debit 💳"
               description="Ditunggu, staff akan datang ke bangkumu"
               icon={<CreditCard />}
               selected={method === 'DEBIT'}
@@ -185,12 +198,13 @@ export default function Payment() {
         </div>
 
         {method && (
-          <motion.div
+           <motion.div
+             ref={instructionRef}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="bg-white p-5 rounded-2xl border border-border shadow-sm"
+             className="scroll-mt-24 bg-white p-5 rounded-2xl border border-border shadow-sm"
           >
-            <h4 className="font-bold text-center mb-4 border-b pb-4">Instruksi Pembayaran</h4>
+             <h4 className="font-bold text-center mb-4 border-b pb-4">Instruksi Pembayaran ✨</h4>
 
             {method === 'CASH' && (
               <div>
@@ -201,13 +215,14 @@ export default function Payment() {
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">Rp</span>
                   <input
                     id="cash-received"
-                    type="number"
+                     type="text"
                     inputMode="numeric"
-                    min={total}
-                    step={1000}
                     value={cashReceived}
-                    onChange={(event) => setCashReceived(event.target.value)}
-                     placeholder="Contoh: 100000"
+                     onChange={(event) => {
+                       const digits = event.target.value.replace(/\D/g, '');
+                       setCashReceived(digits ? new Intl.NumberFormat('en-US').format(Number(digits)) : '');
+                     }}
+                      placeholder="Contoh: 100,000"
                      data-testid="input-cash-received"
                     className="h-12 w-full rounded-xl border border-input bg-background pl-12 pr-4 text-lg font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
@@ -215,9 +230,9 @@ export default function Payment() {
                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                    Masukkan nominal uang yang kamu siapkan. Staff akan membawa kembalian.
                 </p>
-                {Number(cashReceived) >= total && (
+                 {parseCashAmount(cashReceived) !== null && parseCashAmount(cashReceived)! >= total && (
                   <div className="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
-                    Perkiraan kembalian: <strong>{formatRupiah(Number(cashReceived) - total)}</strong>
+                     Perkiraan kembalian: <strong>{formatRupiah(parseCashAmount(cashReceived)! - total)}</strong>
                   </div>
                 )}
               </div>
