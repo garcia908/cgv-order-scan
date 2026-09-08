@@ -5,11 +5,11 @@
   "functions": {
     "api/index.js": {
       "runtime": "nodejs24.x",
-      "includeFiles": ["artifacts/api-server/dist/**"]
+      "includeFiles": "artifacts/api-server/dist/**"
     },
     "api/[...path].js": {
       "runtime": "nodejs24.x",
-      "includeFiles": ["artifacts/api-server/dist/**"]
+      "includeFiles": "artifacts/api-server/dist/**"
     }
   },
   "rewrites": [
