@@ -14,17 +14,17 @@ import {
 const app: Express = express();
 
 app.use(
-  (pinoHttp as any)({
+  pinoHttp({
     logger,
     serializers: {
-      req(req: any) {
+      req(req) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
       },
-      res(res: any) {
+      res(res) {
         return {
           statusCode: res.statusCode,
         };
