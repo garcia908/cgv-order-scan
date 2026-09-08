@@ -140,31 +140,29 @@ router.post("/orders", async (req, res): Promise<void> => {
     return;
   }
 
-    const orderCode = buildOrderCode(inserted.id, inserted.createdAt);
+  const orderCode = buildOrderCode(inserted.id, inserted.createdAt);
   const [final] = await db
     .update(ordersTable)
     .set({ orderCode })
     .where(eq(ordersTable.id, inserted.id))
     .returning();
 
-  if (!final) {
-    res.status(500).json({ error: "Failed to finalize order" });
-    return;
+  if (final) {
+    // Fire-and-forget Telegram notification — never block the response
+    void sendOrderToTelegram({
+      orderCode: final.orderCode,
+      seatNumber: final.seatNumber ?? "—",
+      auditorium: final.auditorium ?? "—",
+      customerName: final.customerName ?? "—",
+      items: final.items,
+      total: final.total,
+      paymentMethod: final.paymentMethod,
+      cashReceived: final.cashReceived,
+      createdAt: final.createdAt,
+    });
   }
 
-  void sendOrderToTelegram({
-    orderCode: final.orderCode,
-    seatNumber: final.seatNumber ?? "—",
-    auditorium: final.auditorium ?? "—",
-    customerName: final.customerName ?? "—",
-    items: final.items,
-    total: final.total,
-    paymentMethod: final.paymentMethod,
-    cashReceived: final.cashReceived,
-    createdAt: final.createdAt,
-  });
-
-    res.status(201).json(GetOrderResponse.parse(toApiOrder(final)));
+  res.status(201).json(GetOrderResponse.parse(toApiOrder(final)));
 });
 
 router.patch("/orders/:id/status", requireAuth, async (req, res): Promise<void> => {
