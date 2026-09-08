@@ -164,7 +164,9 @@ router.post("/orders", async (req, res): Promise<void> => {
     createdAt: final.createdAt,
   });
 
-  res.status(201).json(GetOrderResponse.parse(toApiOrder(final)));
+    res.status(201).json(GetOrderResponse.parse(toApiOrder(final)));
+});
+
 router.patch("/orders/:id/status", requireAuth, async (req, res): Promise<void> => {
   const params = UpdateOrderStatusParams.safeParse(req.params);
   if (!params.success) {
