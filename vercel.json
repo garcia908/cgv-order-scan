@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm run vercel:build",
+  "outputDirectory": "artifacts/cgv-snack-order/dist/public",
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs24.x",
+      "includeFiles": ["artifacts/api-server/dist/**"]
+    },
+    "api/[...path].js": {
+      "runtime": "nodejs24.x",
+      "includeFiles": ["artifacts/api-server/dist/**"]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
