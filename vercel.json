@@ -4,11 +4,9 @@
   "outputDirectory": "artifacts/cgv-snack-order/dist/public",
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs24.x",
       "includeFiles": "artifacts/api-server/dist/**"
     },
     "api/[...path].js": {
-      "runtime": "nodejs24.x",
       "includeFiles": "artifacts/api-server/dist/**"
     }
   },
