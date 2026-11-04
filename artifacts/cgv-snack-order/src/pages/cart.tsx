@@ -2,6 +2,7 @@ import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { formatRupiah } from '@/lib/format';
+import { menuItems } from '@/lib/data';
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,9 +10,17 @@ export default function Cart() {
   const [, setLocation] = useLocation();
   const cart = useAppStore(state => state.cart);
   const updateQty = useAppStore(state => state.updateQty);
+  const setCartOption = useAppStore(state => state.setCartOption);
   const removeFromCart = useAppStore(state => state.removeFromCart);
   
-  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  const subtotal = cart.reduce(
+    (acc, item) => acc + ((item.price + (item.selectedOption?.additionalPrice ?? 0)) * item.qty),
+    0,
+  );
+  const hasUnselectedOptions = cart.some(item => {
+    const menuItem = menuItems.find(menu => menu.id === (item.menuItemId ?? item.id));
+    return Boolean(menuItem?.options && !item.selectedOption);
+  });
 
   if (cart.length === 0) {
     return (
@@ -44,8 +53,12 @@ export default function Cart() {
       <div className="p-4 flex-1">
         <div className="bg-white rounded-2xl shadow-sm border border-border p-4 mb-6">
           <div className="flex flex-col gap-6">
-            {cart.map(item => (
-              <div key={item.id} className="flex gap-4">
+            {cart.map(item => {
+              const menuItem = menuItems.find(menu => menu.id === (item.menuItemId ?? item.id));
+              const itemPrice = item.price + (item.selectedOption?.additionalPrice ?? 0);
+
+              return (
+                <div key={item.id} className="flex gap-4">
                 <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden shrink-0">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 </div>
@@ -60,8 +73,36 @@ export default function Cart() {
                     </button>
                   </div>
                   <div className="font-bold text-foreground text-sm mb-auto">
-                    {formatRupiah(item.price)}
+                    {formatRupiah(itemPrice)}
                   </div>
+
+                  {menuItem?.options && (
+                    <div className="mt-3">
+                      <label htmlFor={`combo-option-${item.id}`} className="mb-1 block text-sm font-medium">
+                        {menuItem.optionsLabel ?? 'Pilih opsi combo'} <span className="text-destructive">*</span>
+                      </label>
+                      <select
+                        id={`combo-option-${item.id}`}
+                        value={item.selectedOption?.label ?? ''}
+                        onChange={event => {
+                          const option = menuItem.options?.find(choice => choice.label === event.target.value);
+                          setCartOption(item.id, option ?? null);
+                        }}
+                        className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="">Pilih {menuItem.optionsLabel?.replace(/^Pilih /, '').toLowerCase() ?? 'opsi menu'}</option>
+                        {menuItem.options.map(option => (
+                          <option key={option.label} value={option.label}>
+                            {option.label}
+                            {option.additionalPrice ? ` (+${formatRupiah(option.additionalPrice)})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      {!item.selectedOption && (
+                        <p className="mt-1 text-xs text-destructive">Pilih satu opsi sebelum melanjutkan.</p>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-3 bg-muted rounded-full px-2 py-1 w-fit">
@@ -80,12 +121,13 @@ export default function Cart() {
                       </button>
                     </div>
                     <div className="text-sm font-bold text-primary ml-auto">
-                      {formatRupiah(item.price * item.qty)}
+                      {formatRupiah(itemPrice * item.qty)}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -113,10 +155,16 @@ export default function Cart() {
         <Button 
           size="lg" 
           className="w-full h-14 text-lg rounded-xl"
+          disabled={hasUnselectedOptions}
           onClick={() => setLocation('/payment')}
         >
           Lanjut ke Pembayaran
         </Button>
+        {hasUnselectedOptions && (
+          <p className="mt-2 text-center text-xs text-destructive">
+            Lengkapi semua pilihan menu di atas untuk melanjutkan.
+          </p>
+        )}
       </div>
     </div>
   );

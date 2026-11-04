@@ -1,20 +1,54 @@
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { formatRupiah } from '@/lib/format';
-import { CheckCircle2, UtensilsCrossed, Loader2 } from 'lucide-react';
+import { CheckCircle2, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useGetOrder, getGetOrderQueryKey } from '@workspace/api-client-react';
+import { GetOrderResponse } from '@workspace/api-zod';
+import { useAppStore } from '@/lib/store';
 
 export default function Success() {
   const [, setLocation] = useLocation();
+  const lastOrder = useAppStore(state => state.lastOrder);
+  const clearLastOrder = useAppStore(state => state.clearLastOrder);
 
   const params = new URLSearchParams(window.location.search);
   const orderIdParam = params.get('orderId');
   const orderId = orderIdParam ? Number(orderIdParam) : NaN;
   const validId = Number.isFinite(orderId) && orderId > 0;
+  const [order] = useState(() => {
+    if (!validId) return null;
 
-  const { data: order, isLoading, isError } = useGetOrder(validId ? orderId : 0, {
-    query: { queryKey: getGetOrderQueryKey(validId ? orderId : 0), enabled: validId },
+    const currentOrder = GetOrderResponse.safeParse(lastOrder);
+    if (currentOrder.success && currentOrder.data.id === orderId) {
+      return currentOrder.data;
+    }
+
+    const cacheKey = `cgv-order-${orderId}`;
+    let serializedOrder: string | null;
+    try {
+      serializedOrder = sessionStorage.getItem(cacheKey);
+    } catch (error) {
+      console.error('Could not read the order confirmation from this browser session.', error);
+      return null;
+    }
+    if (!serializedOrder) return null;
+
+    let cachedOrder: unknown;
+    try {
+      cachedOrder = JSON.parse(serializedOrder);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      sessionStorage.removeItem(cacheKey);
+      return null;
+    }
+
+    const cached = GetOrderResponse.safeParse(cachedOrder);
+    if (!cached.success || cached.data.id !== orderId) {
+      sessionStorage.removeItem(cacheKey);
+      return null;
+    }
+    return cached.data;
   });
 
   if (!validId) {
@@ -26,19 +60,12 @@ export default function Success() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-primary text-primary-foreground">
-        <Loader2 className="w-10 h-10 animate-spin" />
-        <p className="mt-4">Memuat pesanan...</p>
-      </div>
-    );
-  }
-
-  if (isError || !order) {
+  if (!order) {
     return (
       <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-muted-foreground mb-4">Pesanan tidak ditemukan.</p>
+        <p className="text-muted-foreground mb-4">
+          Bukti pesanan tidak tersedia di sesi ini. Cek notifikasi Telegram atau kembali ke menu.
+        </p>
         <Button onClick={() => setLocation('/menu')}>Kembali ke Menu</Button>
       </div>
     );
@@ -130,7 +157,15 @@ export default function Success() {
             variant="outline"
             size="lg"
             className="w-full h-14 text-lg rounded-xl bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white backdrop-blur-sm"
-            onClick={() => setLocation('/menu')}
+            onClick={() => {
+              try {
+                sessionStorage.removeItem(`cgv-order-${orderId}`);
+              } catch (error) {
+                console.error('Could not clear the order confirmation from this browser session.', error);
+              }
+              clearLastOrder();
+              setLocation('/menu');
+            }}
           >
             <UtensilsCrossed className="w-5 h-5 mr-2" /> Pesan Lagi
           </Button>

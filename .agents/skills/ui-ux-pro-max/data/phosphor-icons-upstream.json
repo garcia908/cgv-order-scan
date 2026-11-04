@@ -24603,27 +24603,6 @@
       "ssrImport": "import { RepeatOnce } from \"@phosphor-icons/react/ssr\""
     },
     {
-      "name": "replit-logo",
-      "component": "ReplitLogo",
-      "codepoint": 60298,
-      "categories": [
-        "brands",
-        "technology & development"
-      ],
-      "figmaCategory": "brands",
-      "tags": [
-        "*new*",
-        "coding",
-        "editor",
-        "ide",
-        "logos"
-      ],
-      "publishedIn": 2.1,
-      "updatedIn": 2.1,
-      "clientImport": "import { ReplitLogo } from \"@phosphor-icons/react\"",
-      "ssrImport": "import { ReplitLogo } from \"@phosphor-icons/react/ssr\""
-    },
-    {
       "name": "resize",
       "component": "Resize",
       "codepoint": 60782,

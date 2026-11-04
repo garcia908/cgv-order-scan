@@ -1,32 +1,119 @@
 import { MenuItem } from './types';
-import comboImg from '../assets/combo-solo.png';
-import popcornImg from '../assets/popcorn-caramel.png';
-import snackImg from '../assets/sausage-fries.png';
-import hotdogImg from '../assets/hot-dog.png';
-import colaImg from '../assets/coca-cola.png';
+
+const image = (id: string, version: number) =>
+  `https://cdn.cgv.id/uploads_v2/concessions/${id}.png?version=${version}`;
+
+const menuOptions = (labels: string[], surcharge = 0, surchargeLabel?: string) =>
+  labels.map(label => ({
+    label,
+    additionalPrice: surchargeLabel && label.includes(surchargeLabel) ? surcharge : 0,
+  }));
 
 export const menuItems: MenuItem[] = [
   // COMBO
-  { id: 'c1', name: 'CGV Combo Solo', description: 'Popcorn Regular Caramel + 1 Minuman Medium', price: 55000, category: 'Combo', image: comboImg },
-  { id: 'c2', name: 'CGV Combo Duo', description: 'Popcorn Large Caramel + 2 Minuman Medium', price: 95000, category: 'Combo', image: comboImg },
-  { id: 'c3', name: 'CGV Combo Double', description: '2 Popcorn Large + 2 Minuman Large + 1 Hot Dog', price: 145000, category: 'Combo', image: comboImg },
-  { id: 'c4', name: 'CGV Combo Sampler', description: 'Popcorn Regular + Sausage & Fries + 2 Minuman Medium', price: 125000, category: 'Combo', image: comboImg },
-  
+  {
+    id: 'combo-nestle',
+    name: 'COMBO NESTLE',
+    description: 'CGV Sampler + 1 pilihan minuman',
+    price: 79000,
+    category: 'Combo',
+    image: image('108248', 1),
+    options: menuOptions([
+      'CGV SAMPLER + MILO CRUNCHY',
+      'CGV SAMPLER + ICE CAPUCCINO',
+      'CGV SAMPLER + BLACKCURRANT BOBA',
+    ]),
+  },
+  {
+    id: 'combo-duo',
+    name: 'COMBO DUO',
+    description: 'Popcorn + 2 pilihan minuman (caramel tambah Rp 8.000)',
+    price: 95000,
+    category: 'Combo',
+    image: image('108319', 1),
+    options: menuOptions([
+      'POPCORN SALTY + JASMINE + JASMINE',
+      'POPCORN SALTY + JASMINE + LEMONTEA',
+      'POPCORN SALTY + LEMONTEA + LEMONTEA',
+      'POPCORN SALTY + FANTA + FANTA',
+      'POPCORN SALTY + FANTA + COCA COLA',
+      'POPCORN CARAMEL + JASMINE + JASMINE',
+      'POPCORN CARAMEL + JASMINE + LEMONTEA',
+      'POPCORN CARAMEL + LEMONTEA + LEMONTEA',
+      'POPCORN CARAMEL + FANTA + FANTA',
+      'POPCORN CARAMEL + FANTA + COCA COLA',
+    ], 8000, 'CARAMEL'),
+  },
+  {
+    id: 'combo-double',
+    name: 'COMBO DOUBLE',
+    description: 'Popcorn salty & caramel + 2 pilihan minuman, free refill satu kali',
+    price: 123000,
+    category: 'Combo',
+    image: image('112685', 1),
+    options: menuOptions([
+      'POPCORN SALTY & CARAMEL + LEMONTEA + JASMINE',
+      'POPCORN SALTY & CARAMEL + LEMONTEA + LEMONTEA',
+      'POPCORN SALTY & CARAMEL + JASMINE + JASMINE',
+      'POPCORN SALTY & CARAMEL + COCA COLA + FANTA',
+      'POPCORN SALTY & CARAMEL + FANTA + FANTA',
+      'POPCORN SALTY & CARAMEL + COCA COLA + COCA COLA',
+      'POPCORN SALTY & CARAMEL + LEMONTEA + COCA COLA',
+      'POPCORN SALTY & CARAMEL + COCA COLA + JASMINE',
+      'POPCORN SALTY & CARAMEL + FANTA + JASMINE',
+    ]),
+  },
+  {
+    id: 'combo-duo-nestle',
+    name: 'COMBO DUO NESTLE',
+    description: 'Popcorn + Milo Crunchy + Nescafe Cappuccino (caramel tambah Rp 8.000)',
+    price: 105000,
+    category: 'Combo',
+    image: image('117927', 3),
+    options: menuOptions([
+      'POPCORN SALTY + MILO CRUNCHY + NESCAFE CAPUCCINO',
+      'POPCORN CARAMEL + MILO CRUNCHY + NESCAFE CAPUCCINO',
+    ], 8000, 'CARAMEL'),
+  },
+  {
+    id: 'combo-hemat',
+    name: 'COMBO HEMAT POPCORN + MINUM',
+    description: 'Small popcorn salty + 1 pilihan minuman',
+    price: 41000,
+    category: 'Combo',
+    image: image('108229', 1),
+    options: menuOptions([
+      'SMALL POPCORN SALTY + SPRITE',
+      'SMALL POPCORN SALTY + MINERAL WATER',
+      'SMALL POPCORN SALTY + MIZONE',
+      'SMALL POPCORN SALTY + PULPY',
+      'SMALL POPCORN SALTY + FRESSTEA',
+      'POPCORN SALTY + COCA COLA',
+    ]),
+  },
+
   // POPCORN
-  { id: 'p1', name: 'Popcorn Caramel Regular', description: 'Popcorn karamel manis renyah ukuran regular', price: 35000, category: 'Popcorn', image: popcornImg },
-  { id: 'p2', name: 'Popcorn Caramel Large', description: 'Popcorn karamel ukuran besar untuk berbagi', price: 50000, category: 'Popcorn', image: popcornImg },
-  { id: 'p3', name: 'Popcorn Cheese Regular', description: 'Popcorn rasa keju gurih ukuran regular', price: 38000, category: 'Popcorn', image: popcornImg },
-  { id: 'p4', name: 'Popcorn Mushroom Original', description: 'Popcorn asin gurih klasik', price: 32000, category: 'Popcorn', image: popcornImg },
+  { id: 'popcorn-medium-salty', name: 'Medium Salty Popcorn', description: '', price: 46000, category: 'Popcorn', image: image('101012', 1) },
+  { id: 'popcorn-medium-caramel', name: 'Medium Caramel Popcorn', description: '', price: 58000, category: 'Popcorn', image: image('105047', 1) },
+  { id: 'popcorn-large-salty', name: 'Large Salty Popcorn', description: '', price: 70000, category: 'Popcorn', image: image('106666', 1) },
+  { id: 'popcorn-large-caramel', name: 'Large Caramel Popcorn', description: '', price: 82000, category: 'Popcorn', image: image('106657', 1) },
 
   // SNACK
-  { id: 's1', name: 'Sausage & Fries', description: 'Sosis bakar + kentang goreng renyah', price: 45000, category: 'Snack', image: snackImg },
-  { id: 's2', name: 'CGV Sampler', description: 'Mix kentang, sosis, chicken pop', price: 65000, category: 'Snack', image: snackImg },
-  { id: 's3', name: 'Hot Dog Classic', description: 'Hot dog dengan saus mustard & saus tomat', price: 38000, category: 'Snack', image: hotdogImg },
-  { id: 's4', name: 'Nachos Cheese', description: 'Keripik jagung dengan saus keju leleh', price: 35000, category: 'Snack', image: hotdogImg },
+  { id: 'sausage-fries', name: 'Sausage & Fries', description: '', price: 55000, category: 'Snack', image: image('108615', 1) },
+  { id: 'cgv-sampler', name: 'CGV Sampler', description: '', price: 60000, category: 'Snack', image: image('108089', 3) },
+  { id: 'sausage-bun-beef', name: 'Sausage Bun Beef', description: '', price: 50000, category: 'Snack', image: image('116221', 2) },
+  { id: 'french-fries', name: 'French Fries', description: '', price: 50000, category: 'Snack', image: image('101017', 1) },
+  { id: 'fried-siomay', name: 'Fried Siomay', description: '', price: 50000, category: 'Snack', image: image('101021', 1) },
 
   // MINUMAN
-  { id: 'm1', name: 'Coca-Cola Medium', description: 'Minuman soda segar ukuran medium', price: 22000, category: 'Minuman', image: colaImg },
-  { id: 'm2', name: 'Coca-Cola Large', description: 'Minuman soda segar ukuran besar', price: 28000, category: 'Minuman', image: colaImg },
-  { id: 'm3', name: 'Mineral Water', description: 'Air mineral 600ml', price: 15000, category: 'Minuman', image: colaImg },
-  { id: 'm4', name: 'Iced Lemon Tea', description: 'Teh lemon dingin yang menyegarkan', price: 25000, category: 'Minuman', image: colaImg },
+  { id: 'cola', name: 'Coca-Cola', description: '', price: 36000, category: 'Minuman', image: image('101037', 1), options: [{ label: 'Medium' }, { label: 'Large', additionalPrice: 4000 }], optionsLabel: 'Pilih ukuran' },
+  { id: 'fanta', name: 'Fanta', description: '', price: 36000, category: 'Minuman', image: image('101039', 1), options: [{ label: 'Medium' }, { label: 'Large', additionalPrice: 4000 }], optionsLabel: 'Pilih ukuran' },
+  { id: 'sprite', name: 'Sprite', description: '', price: 36000, category: 'Minuman', image: image('101038', 1), options: [{ label: 'Medium' }, { label: 'Large', additionalPrice: 4000 }], optionsLabel: 'Pilih ukuran' },
+  { id: 'jasmine-tea', name: 'Jasmine', description: '', price: 36000, category: 'Minuman', image: image('115531', 2), options: [{ label: 'Medium' }, { label: 'Large', additionalPrice: 4000 }], optionsLabel: 'Pilih ukuran' },
+  { id: 'lemon-tea', name: 'Frestea Lemon', description: '', price: 36000, category: 'Minuman', image: image('115615', 3), options: [{ label: 'Medium' }, { label: 'Large', additionalPrice: 4000 }], optionsLabel: 'Pilih ukuran' },
+  { id: 'milo-crunchy', name: 'MILO Crunchy', description: '', price: 50000, category: 'Minuman', image: image('114560', 1) },
+  { id: 'ice-lychee-tea', name: 'Iced Lychee Tea', description: '', price: 52000, category: 'Minuman', image: image('111926', 1) },
+  { id: 'mineral-water', name: 'Mineral Water 600ml', description: '', price: 22000, category: 'Minuman', image: image('100032', 1) },
+  { id: 'blackcurrant-boba', name: 'Blackcurrant Boba', description: 'Ice Blackcurrant with Boba (16 oz)', price: 40000, category: 'Minuman', image: image('111531', 1) },
+  { id: 'yakult-lemonade', name: 'Yakult Lemonade', description: 'Ice Lemonade with Yakult & Jelly Boba (16 oz)', price: 40000, category: 'Minuman', image: image('111530', 1) },
 ];

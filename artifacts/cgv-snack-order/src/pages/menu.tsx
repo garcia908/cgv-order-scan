@@ -21,7 +21,10 @@ export default function Menu() {
 
   const filteredItems = menuItems.filter(item => item.category === activeCategory);
   const cartTotalItems = cart.reduce((acc, item) => acc + item.qty, 0);
-  const cartTotalPrice = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  const cartTotalPrice = cart.reduce(
+    (acc, item) => acc + ((item.price + (item.selectedOption?.additionalPrice ?? 0)) * item.qty),
+    0,
+  );
 
   return (
     <div className="min-h-[100dvh] w-full max-w-md mx-auto bg-gray-50 flex flex-col relative pb-24">
@@ -62,7 +65,19 @@ export default function Menu() {
       {/* Menu List */}
       <div className="p-4 flex flex-col gap-4">
         {filteredItems.map(item => {
-          const cartItem = cart.find(c => c.id === item.id);
+          const itemCart = cart.filter(c => (c.menuItemId ?? c.id) === item.id);
+          const cartItem = itemCart[0];
+          const cartItemQty = itemCart.reduce((total, current) => total + current.qty, 0);
+          const addItem = () => {
+            if (item.price === null) return;
+            addToCart({
+              menuItemId: item.id,
+              name: item.name,
+              price: item.price,
+              image: item.image,
+              separateLine: Boolean(item.options),
+            });
+          };
           
           return (
             <motion.div 
@@ -76,22 +91,42 @@ export default function Menu() {
               </div>
               <div className="flex-1 flex flex-col">
                 <h3 className="font-semibold text-foreground leading-tight mb-1">{item.name}</h3>
+              {item.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
-                <div className="mt-auto flex items-center justify-between">
-                  <span className="font-bold text-foreground">{formatRupiah(item.price)}</span>
+              )}
+              <div className="mt-auto flex items-center justify-between">
+                <span className="font-bold text-foreground">
+                  {item.price === null
+                    ? 'Harga menyusul'
+                    : item.options?.some(option => option.additionalPrice)
+                      ? `${formatRupiah(item.price)} - ${formatRupiah(
+                          item.price + Math.max(...item.options.map(option => option.additionalPrice ?? 0)),
+                        )}`
+                      : formatRupiah(item.price)}
+                </span>
                   
-                  {cartItem ? (
+                  {cartItemQty > 0 && cartItem ? (
                     <div className="flex items-center gap-3 bg-muted rounded-full px-2 py-1">
                       <button 
                         className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm text-foreground"
-                        onClick={() => cartItem.qty > 1 ? updateQty(item.id, -1) : removeFromCart(item.id)}
+                        onClick={() => {
+                          if (item.options) {
+                            cartItem.qty > 1
+                              ? updateQty(cartItem.id, -1)
+                              : removeFromCart(cartItem.id);
+                          } else {
+                            cartItem.qty > 1
+                              ? updateQty(item.id, -1)
+                              : removeFromCart(item.id);
+                          }
+                        }}
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="font-semibold text-sm w-4 text-center">{cartItem.qty}</span>
+                      <span className="font-semibold text-sm w-4 text-center">{cartItemQty}</span>
                       <button 
                         className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-sm text-white"
-                        onClick={() => updateQty(item.id, 1)}
+                        onClick={() => item.options ? addItem() : updateQty(item.id, 1)}
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -100,9 +135,10 @@ export default function Menu() {
                     <Button 
                       size="sm" 
                       className="rounded-full h-8 px-4 font-semibold"
-                      onClick={() => addToCart({ id: item.id, name: item.name, price: item.price, image: item.image })}
+                      disabled={item.price === null}
+                      onClick={addItem}
                     >
-                      Tambah
+                      {item.price === null ? 'Menyusul' : 'Tambah'}
                     </Button>
                   )}
                 </div>

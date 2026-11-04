@@ -84,8 +84,9 @@ export async function sendOrderToTelegram(order: OrderPayload): Promise<void> {
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
-    logger.warn("Telegram not configured (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID missing)");
-    return;
+    throw new Error(
+      "Telegram is not configured; set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID",
+    );
   }
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
@@ -96,21 +97,24 @@ export async function sendOrderToTelegram(order: OrderPayload): Promise<void> {
     disable_web_page_preview: true,
   };
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
-    if (!res.ok) {
-      const text = await res.text();
-      logger.error({ status: res.status, body: text }, "Telegram sendMessage failed");
-      return;
-    }
-
-    logger.info({ orderCode: order.orderCode }, "Telegram notification sent");
-  } catch (err) {
-    logger.error({ err }, "Telegram sendMessage threw");
+  const result: unknown = await res.json();
+  if (
+    !res.ok ||
+    typeof result !== "object" ||
+    result === null ||
+    !("ok" in result) ||
+    result.ok !== true
+  ) {
+    throw new Error(
+      `Telegram sendMessage failed (${res.status}): ${JSON.stringify(result)}`,
+    );
   }
+
+  logger.info({ orderCode: order.orderCode }, "Telegram notification sent");
 }

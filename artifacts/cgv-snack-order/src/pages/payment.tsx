@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { formatRupiah } from '@/lib/format';
+import { menuItems } from '@/lib/data';
 import { ArrowLeft, Banknote, CreditCard, QrCode, Check, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ export default function Payment() {
   const setDelivery = useAppStore(state => state.setDelivery);
   const clearDelivery = useAppStore(state => state.clearDelivery);
   const clearCart = useAppStore(state => state.clearCart);
+  const setLastOrder = useAppStore(state => state.setLastOrder);
   const queryClient = useQueryClient();
   const createOrder = useCreateOrder();
 
@@ -47,7 +49,14 @@ export default function Payment() {
     mode: 'onTouched',
   });
 
-  const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  const total = cart.reduce(
+    (acc, item) => acc + ((item.price + (item.selectedOption?.additionalPrice ?? 0)) * item.qty),
+    0,
+  );
+  const hasUnselectedOptions = cart.some(item => {
+    const menuItem = menuItems.find(menu => menu.id === (item.menuItemId ?? item.id));
+    return Boolean(menuItem?.options && !item.selectedOption);
+  });
 
   useEffect(() => {
     if (!method) return;
@@ -72,7 +81,12 @@ export default function Payment() {
           seatNumber: values.seatNumber,
           auditorium: values.auditorium,
           customerName: values.customerName,
-          items: cart.map(c => ({ id: c.id, name: c.name, qty: c.qty, price: c.price })),
+          items: cart.map(c => ({
+            id: c.id,
+            name: c.selectedOption ? `${c.name} — ${c.selectedOption.label}` : c.name,
+            qty: c.qty,
+            price: c.price + (c.selectedOption?.additionalPrice ?? 0),
+          })),
           subtotal: total,
           total,
           paymentMethod: method,
@@ -81,6 +95,13 @@ export default function Payment() {
       },
       {
         onSuccess: (order) => {
+          setLastOrder(order);
+          try {
+            sessionStorage.setItem(`cgv-order-${order.id}`, JSON.stringify(order));
+          } catch (error) {
+            console.error('Could not cache the order confirmation in this browser session.', error);
+            toast.warning('Pesanan terkirim. Bukti pesanan hanya tersedia selama halaman ini terbuka.');
+          }
           clearCart();
           clearDelivery();
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
@@ -88,15 +109,15 @@ export default function Payment() {
           setLocation(`/success?orderId=${order.id}`);
         },
         onError: (err) => {
-          toast.error('Gagal membuat pesanan. Coba lagi.');
+          toast.error('Pesanan gagal dikirim ke Telegram. Periksa konfigurasi server lalu coba lagi.');
           console.error(err);
         },
       },
     );
   };
 
-  if (cart.length === 0) {
-    setLocation('/');
+  if (cart.length === 0 || hasUnselectedOptions) {
+    setLocation(cart.length === 0 ? '/' : '/cart');
     return null;
   }
 
